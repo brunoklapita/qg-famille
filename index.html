@@ -236,7 +236,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
           <div class="chips" id="evWhoChips"></div>
           <div class="row" id="evNewWho" style="display:none;margin-top:6px"><input type="text" id="evNewName" placeholder="Prénom" maxlength="20" style="flex:1"><button type="button" class="btn tiny" id="evNewOk">OK</button></div>
         </div>
-        <button class="btn full" type="submit">➕ Ajouter au planning</button>
+        <button class="btn full" type="submit" id="evSubmit">➕ Ajouter au planning</button>
       </form>
       </div>
     </div>
@@ -751,7 +751,7 @@ function dayLabel(s){const d=daysTo(parseYmd(s));if(d===0)return"Aujourd'hui";if
 function renderAgenda(){
   const up=upcoming();let html="",last="";
   up.forEach(e=>{if(e._day!==last){last=e._day;html+=`<div class="daytitle ${daysTo(parseYmd(e._day))===0?"today":""}">${esc(dayLabel(e._day))}</div>`}
-    html+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+(e.date<ymd(new Date())?"depuis "+esc(shortDay(e.date))+", ":"")+evRange(e)+'</span>':""}</div></div><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
+    html+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+(e.date<ymd(new Date())?"depuis "+esc(shortDay(e.date))+", ":"")+evRange(e)+'</span>':""}</div></div><button class="del" data-editev="${esc(e.id)}" title="Modifier">✏️</button><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
   $("#agendaList").innerHTML=html||'<div class="empty">Agenda vide. Soit c\'est les vacances, soit personne n\'a rien noté.</div>';
   let hh="",hl="";up.slice(0,4).forEach(e=>{if(e._day!==hl){hl=e._day;hh+=`<div class="daytitle ${daysTo(parseYmd(e._day))===0?"today":""}">${esc(dayLabel(e._day))}</div>`}
     hh+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+evRange(e)+'</span>':""}</div></div></div>`});
@@ -813,8 +813,20 @@ $("#addEvent").onsubmit=e=>{e.preventDefault();
   const date=$("#evDate").value,time=$("#evTime").value;let endDate=$("#evEndDate").value,endTime=$("#evEndTime").value;
   if(endDate===date)endDate="";
   if((endDate||date)+(endTime||"99")<date+(time||"00")){toast("⏰ La fin est avant le début !");return}
-  state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date,time,endDate,endTime,who:whoLabel(),whos:[...whoSel]});
-  $("#evTitle").value="";$("#evTime").value="";$("#evEndDate").value="";$("#evEndTime").value="";whoSel.clear();renderWhoChips();openEvForm(false);save("agenda");render();toast("📅 C'est noté !")};
+  const data={title:$("#evTitle").value.trim().slice(0,100),date,time,endDate,endTime,who:whoLabel(),whos:[...whoSel]};
+  const ed=editingEv&&state.agenda.events.find(x=>x.id===editingEv);
+  if(ed)Object.assign(ed,data);else state.agenda.events.push(Object.assign({id:uid()},data));
+  const wasEdit=!!ed;resetEvForm();openEvForm(false);save("agenda");render();toast(wasEdit?"✏️ Modifié !":"📅 C'est noté !")};
+let editingEv=null;
+function resetEvForm(){editingEv=null;$("#evTitle").value="";$("#evDate").value=ymd(new Date());$("#evTime").value="";$("#evEndDate").value="";$("#evEndTime").value="";$("#evEndDate").min="";whoSel.clear();renderWhoChips();$("#evSubmit").textContent="➕ Ajouter au planning"}
+function editEvent(id){const e=state.agenda.events.find(x=>x.id===id);if(!e)return;
+  editingEv=id;$("#evTitle").value=e.title||"";$("#evDate").value=e.date||"";$("#evTime").value=e.time||"";$("#evEndDate").value=e.endDate||"";$("#evEndTime").value=e.endTime||"";$("#evEndDate").min=e.date||"";
+  whoSel.clear();const all=people();
+  if(Array.isArray(e.whos)&&e.whos.length)e.whos.forEach(p=>{if(all.includes(p))whoSel.add(p)});
+  else if(e.who&&e.who!=="Toute la famille")String(e.who).split(/,\s*| et /).forEach(p=>{if(all.includes(p.trim()))whoSel.add(p.trim())});
+  renderWhoChips();$("#evSubmit").textContent="💾 Enregistrer les modifications";
+  go("agenda");openEvForm(true);$("#evToggle").textContent="✕ Annuler";window.scrollTo({top:0,behavior:"smooth"})}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-editev]");if(b)editEvent(b.dataset.editev)});
 
 /* ================= MODULES : NOËL, STOCK, MAISON, SORTIES ================= */
 Object.assign(state,{noel:{budget:0,gifts:[]},stock:{items:[]},maison:{tasks:[],contacts:[]},sorties:{items:[]}});
@@ -1010,7 +1022,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-kdel
 
 /* ===== Agenda : formulaire repliable ===== */
 function openEvForm(open){$("#evFormWrap").classList.toggle("open",open);$("#evToggle").textContent=open?"✕ Fermer":"＋ Nouvel événement";if(open)setTimeout(()=>$("#evTitle").focus(),50)}
-$("#evToggle").onclick=()=>openEvForm(!$("#evFormWrap").classList.contains("open"));
+$("#evToggle").onclick=()=>{const open=$("#evFormWrap").classList.contains("open");if(open&&editingEv)resetEvForm();openEvForm(!open)};
 document.addEventListener("click",e=>{if(e.target.closest("[data-newev]"))setTimeout(()=>openEvForm(true),60)});
 
 boot();
