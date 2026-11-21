@@ -228,8 +228,10 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <div id="evFormWrap" style="margin-top:12px">
       <form class="form" id="addEvent">
         <label class="full">Quoi ?<input type="text" id="evTitle" placeholder="Entraînement, dentiste, match…" required></label>
-        <label>Jour<input type="date" id="evDate" required></label>
-        <label>Heure<input type="time" id="evTime"></label>
+        <label>Date de début<input type="date" id="evDate" required></label>
+        <label>Heure de début<input type="time" id="evTime"></label>
+        <label>Date de fin<input type="date" id="evEndDate"></label>
+        <label>Heure de fin<input type="time" id="evEndTime"></label>
         <div class="full"><div class="small muted" style="font-weight:800">Qui ? <span style="font-weight:600">(plusieurs choix possibles)</span></div>
           <div class="chips" id="evWhoChips"></div>
           <div class="row" id="evNewWho" style="display:none;margin-top:6px"><input type="text" id="evNewName" placeholder="Prénom" maxlength="20" style="flex:1"><button type="button" class="btn tiny" id="evNewOk">OK</button></div>
@@ -726,7 +728,18 @@ function renderCourses(){
 }
 function upcoming(){
   const t=ymd(new Date());
-  return state.agenda.events.filter(e=>e.date>=t).sort((a,b)=>(a.date+(a.time||"99")).localeCompare(b.date+(b.time||"99")));
+  return state.agenda.events.filter(e=>(e.endDate||e.date)>=t)
+    .map(e=>Object.assign({},e,{_day:e.date<t?t:e.date}))
+    .sort((a,b)=>(a._day+(a.date<t?"00":(a.time||"99"))).localeCompare(b._day+(b.date<t?"00":(b.time||"99"))));
+}
+const shortDay=s=>parseYmd(s).toLocaleDateString("fr-FR",{weekday:"short",day:"numeric",month:"short"});
+function evHour(e){const t=ymd(new Date());if(e.date<t)return'<span class="muted small">en cours</span>';
+  const sameDay=!e.endDate||e.endDate===e.date;
+  const start=e.time?esc(e.time):'<span class="muted small">journée</span>';
+  return sameDay&&e.endTime?`${start}<div class="muted small">→ ${esc(e.endTime)}</div>`:start}
+function evRange(e){
+  if(!e.endDate||e.endDate===e.date)return"";
+  return `jusqu'au ${esc(shortDay(e.endDate))}${e.endTime?" "+esc(e.endTime):""}`;
 }
 function evHtml(e,del){
   const d=parseYmd(e.date);
@@ -737,11 +750,11 @@ function evHtml(e,del){
 function dayLabel(s){const d=daysTo(parseYmd(s));if(d===0)return"Aujourd'hui";if(d===1)return"Demain";const t=parseYmd(s).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});return t}
 function renderAgenda(){
   const up=upcoming();let html="",last="";
-  up.forEach(e=>{if(e.date!==last){last=e.date;html+=`<div class="daytitle ${daysTo(parseYmd(e.date))===0?"today":""}">${esc(dayLabel(e.date))}</div>`}
-    html+=`<div class="ev"><div class="hour">${e.time?esc(e.time):'<span class="muted small">journée</span>'}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}</div></div><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
+  up.forEach(e=>{if(e._day!==last){last=e._day;html+=`<div class="daytitle ${daysTo(parseYmd(e._day))===0?"today":""}">${esc(dayLabel(e._day))}</div>`}
+    html+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+(e.date<ymd(new Date())?"depuis "+esc(shortDay(e.date))+", ":"")+evRange(e)+'</span>':""}</div></div><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
   $("#agendaList").innerHTML=html||'<div class="empty">Agenda vide. Soit c\'est les vacances, soit personne n\'a rien noté.</div>';
-  let hh="",hl="";up.slice(0,4).forEach(e=>{if(e.date!==hl){hl=e.date;hh+=`<div class="daytitle ${daysTo(parseYmd(e.date))===0?"today":""}">${esc(dayLabel(e.date))}</div>`}
-    hh+=`<div class="ev"><div class="hour">${e.time?esc(e.time):'<span class="muted small">journée</span>'}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}</div></div></div>`});
+  let hh="",hl="";up.slice(0,4).forEach(e=>{if(e._day!==hl){hl=e._day;hh+=`<div class="daytitle ${daysTo(parseYmd(e._day))===0?"today":""}">${esc(dayLabel(e._day))}</div>`}
+    hh+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+evRange(e)+'</span>':""}</div></div></div>`});
   $("#homeAgenda").innerHTML=up.length?hh+(up.length>4?`<div class="row" style="margin-top:8px"><button class="btn tiny ghost" data-go="agenda">+ ${up.length-4} autre(s)</button></div>`:""):'<div class="empty">Rien de prévu pour l\'instant.</div>';
 }
 function renderHome(){
@@ -795,9 +808,13 @@ document.addEventListener("click",e=>{if(e.target.id!=="clearDone")return;
 $("#addExtra").onsubmit=e=>{e.preventDefault();const v=$("#extraName").value.trim();if(!v)return;
   state.courses.extras.push({id:uid(),name:v.slice(0,80),done:false});$("#extraName").value="";save("courses");render();toast("🛒 Ajouté !")};
 $("#evDate").value=ymd(new Date());
+$("#evDate").addEventListener("change",()=>{const s=$("#evDate").value,f=$("#evEndDate").value;$("#evEndDate").min=s;if(f&&f<s)$("#evEndDate").value=s});
 $("#addEvent").onsubmit=e=>{e.preventDefault();
-  state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date:$("#evDate").value,time:$("#evTime").value,who:whoLabel(),whos:[...whoSel]});
-  $("#evTitle").value="";$("#evTime").value="";whoSel.clear();renderWhoChips();openEvForm(false);save("agenda");render();toast("📅 C'est noté !")};
+  const date=$("#evDate").value,time=$("#evTime").value;let endDate=$("#evEndDate").value,endTime=$("#evEndTime").value;
+  if(endDate===date)endDate="";
+  if((endDate||date)+(endTime||"99")<date+(time||"00")){toast("⏰ La fin est avant le début !");return}
+  state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date,time,endDate,endTime,who:whoLabel(),whos:[...whoSel]});
+  $("#evTitle").value="";$("#evTime").value="";$("#evEndDate").value="";$("#evEndTime").value="";whoSel.clear();renderWhoChips();openEvForm(false);save("agenda");render();toast("📅 C'est noté !")};
 
 /* ================= MODULES : NOËL, STOCK, MAISON, SORTIES ================= */
 Object.assign(state,{noel:{budget:0,gifts:[]},stock:{items:[]},maison:{tasks:[],contacts:[]},sorties:{items:[]}});
