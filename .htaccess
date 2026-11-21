@@ -1,0 +1,11 @@
+Options -Indexes
+
+# Force le HTTPS (décommente si ton hébergeur fournit un certificat, recommandé)
+# RewriteEngine On
+# RewriteCond %{HTTPS} off
+# RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+<IfModule mod_headers.c>
+  Header set X-Frame-Options "DENY"
+  Header set Referrer-Policy "same-origin"
+</IfModule>

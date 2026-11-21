@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta name="robots" content="noindex,nofollow">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#1d6f84">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Le QG de la famille</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f1e7; --card:#fffdf8; --ink:#1f2a2e; --muted:#6b7478; --line:#e6dccb;
+  --sea:#1d6f84; --sea-soft:#dcedf0; --sun:#f2a33a; --sun-soft:#fdebd2; --coral:#e2614b; --leaf:#4f8a4b; --leaf-soft:#e2efdd;
+  --radius:18px; --shadow:0 2px 0 rgba(31,42,46,.06), 0 8px 24px -12px rgba(31,42,46,.18);
+}
+@media (prefers-color-scheme: dark){
+  :root{--bg:#141b1e; --card:#1d262a; --ink:#eef1ee; --muted:#9aa5a8; --line:#2d3a3f; --sea:#5fb3c6; --sea-soft:#1f3a41; --sun:#f5b55c; --sun-soft:#3d3021; --coral:#f07b66; --leaf:#7fbf79; --leaf-soft:#22362a;}
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Nunito,system-ui,sans-serif;font-size:16px;line-height:1.4}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;margin:0;letter-spacing:-.01em}
+button,input,select{font:inherit;color:inherit}
+.wrap{max-width:760px;margin:0 auto;padding:16px 16px 96px}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 0 16px}
+header.top h1{font-size:1.75rem;font-weight:800}
+header.top .sub{color:var(--muted);font-size:.92rem}
+.pill{display:inline-flex;align-items:center;gap:6px;background:var(--sea-soft);color:var(--sea);font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.pill.warn{background:var(--sun-soft);color:#a3620b}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
+.card h2{font-size:1.15rem;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid .card{margin:0}
+@media (max-width:560px){.grid{grid-template-columns:1fr}}
+.big{font-family:Fraunces,serif;font-size:2rem;font-weight:800;line-height:1}
+.muted{color:var(--muted)}
+.small{font-size:.86rem}
+.btn{border:0;border-radius:12px;padding:10px 14px;font-weight:800;cursor:pointer;background:var(--sea);color:#fff;transition:transform .08s}
+.btn:active{transform:scale(.97)}
+.btn.ghost{background:transparent;color:var(--sea);border:1.5px solid var(--sea)}
+.btn.sun{background:var(--sun);color:#3a2504}
+.btn.tiny{padding:6px 10px;font-size:.82rem;border-radius:10px}
+.btn:disabled{opacity:.5;cursor:wait}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+nav.tabs{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:space-around;padding:6px 4px calc(6px + env(safe-area-inset-bottom));z-index:10}
+nav.tabs button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:2px;font-size:.72rem;font-weight:700;color:var(--muted);padding:6px 8px;border-radius:12px;cursor:pointer;min-width:58px}
+nav.tabs button .ic{font-size:1.35rem;line-height:1}
+nav.tabs button.on{color:var(--sea);background:var(--sea-soft)}
+section.view{display:none}
+section.view.on{display:block;animation:fade .2s ease}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+/* menu */
+.day{border-top:1px dashed var(--line);padding:12px 0}
+.day:first-of-type{border-top:0;padding-top:0}
+.day .dname{font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px}
+.day.today .dname{color:var(--coral)}
+.meal{display:flex;gap:12px;align-items:flex-start;background:var(--bg);border-radius:14px;padding:10px 12px;margin-bottom:8px}
+.meal .emo{font-size:1.8rem;line-height:1}
+.meal .info{flex:1;min-width:0}
+.meal .name{font-weight:800}
+.meal .meta{font-size:.8rem;color:var(--muted)}
+.meal .slot{font-size:.72rem;font-weight:800;color:var(--sea);text-transform:uppercase;letter-spacing:.06em}
+.meal .acts{display:flex;flex-direction:column;gap:6px}
+.iconbtn{border:0;background:var(--card);border:1px solid var(--line);border-radius:10px;width:36px;height:36px;cursor:pointer;font-size:1rem}
+.recipe{margin-top:8px;font-size:.88rem}
+.recipe ol{margin:6px 0 0;padding-left:20px}
+.recipe ul{margin:4px 0 0;padding-left:18px;columns:2;column-gap:16px}
+@media (max-width:480px){.recipe ul{columns:1}}
+.tag{display:inline-block;font-size:.72rem;font-weight:800;padding:2px 8px;border-radius:999px;background:var(--leaf-soft);color:var(--leaf);margin-right:4px}
+.tag.claude{background:var(--sun-soft);color:#a3620b}
+/* lists */
+.check{display:flex;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid var(--line);cursor:pointer}
+.check:last-child{border-bottom:0}
+.check input{width:22px;height:22px;accent-color:var(--leaf);flex:none}
+.check.done .lbl{text-decoration:line-through;color:var(--muted)}
+.check .qty{margin-left:auto;font-size:.8rem;color:var(--muted);text-align:right}
+.aisle{font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sea);margin:14px 0 2px}
+.aisle:first-child{margin-top:0}
+input[type=text],input[type=date],input[type=time],input[type=number],select{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;min-width:0}
+input:focus,select:focus{outline:2px solid var(--sea);outline-offset:1px}
+.form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.form input,.form select{width:100%}
+.form .full{grid-column:1/-1}
+.form label{font-size:.78rem;font-weight:800;color:var(--muted);display:flex;flex-direction:column;gap:4px}
+.ev{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
+.ev:last-child{border-bottom:0}
+.ev .when{background:var(--sea-soft);color:var(--sea);border-radius:12px;padding:6px 8px;text-align:center;min-width:56px;font-weight:800;line-height:1.1}
+.ev .when b{display:block;font-size:1.2rem;font-family:Fraunces,serif}
+.ev .when span{font-size:.7rem;text-transform:uppercase}
+.ev .what{flex:1;min-width:0}
+.ev .who{font-size:.78rem;color:var(--muted)}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:4px 6px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
+.stats div{background:var(--bg);border-radius:14px;padding:10px 4px}
+.stats b{display:block;font-family:Fraunces,serif;font-size:1.4rem}
+.stats span{font-size:.74rem;color:var(--muted);font-weight:700}
+.empty{color:var(--muted);font-style:italic;padding:8px 0}
+.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast.on{opacity:1;transform:translateX(-50%)}
+.weather a{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;background:var(--bg);border-radius:14px;padding:10px 12px;margin-top:8px;font-weight:700}
+.hero-meal{display:flex;gap:12px;align-items:center}
+.hero-meal .emo{font-size:2.6rem}
+.tiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tile{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:18px 12px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;text-align:center}
+.tile .ic{font-size:2.2rem}.tile b{font-family:Fraunces,serif;font-size:1.02rem}
+.back{background:none;border:0;color:var(--sea);font-weight:800;cursor:pointer;padding:4px 0 10px;font-size:.95rem}
+.bar{height:10px;background:var(--bg);border-radius:99px;margin-top:10px;overflow:hidden}.bar div{height:100%;width:0;border-radius:99px;transition:width .3s}
+.stat{border:0;border-radius:999px;padding:6px 10px;font-weight:800;font-size:.78rem;cursor:pointer;white-space:nowrap}
+.st-idee{background:var(--sun-soft);color:#a3620b}.st-trouve{background:var(--sea-soft);color:var(--sea)}.st-commande{background:#ece3f7;color:#6b46a3}.st-emballe{background:var(--leaf-soft);color:var(--leaf)}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.chip{border:1.5px dashed var(--line);background:var(--bg);border-radius:999px;padding:6px 10px;font-size:.8rem;font-weight:700;cursor:pointer}
+.dot{width:12px;height:12px;border-radius:50%;flex:none}.dot.late{background:var(--coral)}.dot.soon{background:var(--sun)}.dot.ok{background:var(--leaf)}
+.big-check{width:22px;height:22px;accent-color:var(--leaf);flex:none}
+.xmas{background:linear-gradient(135deg,var(--card),var(--leaf-soft))}
+.check.instock .lbl{color:var(--muted)}
+body.locked .wrap,body.locked nav.tabs{filter:blur(6px);pointer-events:none;user-select:none}
+#login{display:none;position:fixed;inset:0;z-index:50;background:rgba(20,27,30,.35);place-items:center}
+body.locked #login{display:grid}
+#login .card{width:min(360px,92vw);text-align:center}
+#login input{width:100%;font-size:1.2rem;text-align:center;letter-spacing:.2em;margin:12px 0}
+body.kid #genWeek,body.kid [data-swap],body.kid [data-claude],body.kid #addStock,body.kid [data-act=sdel],body.kid [data-act=tdone],body.kid [data-act=tdel],body.kid [data-act=cdel],body.kid #addContact,body.kid .parent-only,body.kid [data-go=noel]{display:none!important}
+.iconlink{background:none;border:0;cursor:pointer;font-size:1.1rem;padding:4px}
+svg text{fill:var(--muted);font-family:Nunito,sans-serif;font-size:11px;font-weight:700}
+</style>
+</head>
+<body class="locked">
+<div class="wrap">
+  <header class="top">
+    <div>
+      <div class="sub" id="hello">Bonjour 👋</div>
+      <h1>Le QG de la famille</h1>
+    </div>
+    <div class="row" style="gap:4px"><span class="pill" id="syncPill">⏳ Connexion…</span><button class="iconlink" id="logoutBtn" title="Se déconnecter de cet appareil">🔒</button></div>
+  </header>
+
+  <!-- ACCUEIL -->
+  <section class="view on" id="v-home">
+    <div class="card">
+      <h2>🍽️ <span id="homeMealTitle">Ce soir, on mange…</span></h2>
+      <div id="homeMeal"></div>
+    </div>
+    <div>
+      <div class="card">
+        <h2>🛒 Courses</h2>
+        <div class="big" id="homeShopCount">–</div>
+        <div class="muted small" id="homeShopTxt">articles à acheter</div>
+        <div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="courses">Voir la liste</button></div>
+      </div>
+    </div>
+    <div class="grid" id="homeExtra" style="margin-top:14px"></div>
+    <div class="card" style="margin-top:14px">
+      <h2>📅 Bientôt au programme</h2>
+      <div id="homeAgenda"></div>
+    </div>
+    <div class="card weather">
+      <h2>🌦️ Météo</h2>
+      <div class="muted small">Le raccourci vers les pros de la météo :</div>
+      <a href="https://meteofrance.com" target="_blank" rel="noopener">☀️ <span>Ouvrir Météo-France<br><span class="muted small">Tape « Avy » ou « Pons » pour la prévision locale</span></span></a>
+          </div>
+  </section>
+
+  <!-- MENUS -->
+  <section class="view" id="v-menus">
+    <div class="card">
+      <div class="row" style="margin-bottom:6px">
+        <h2 style="margin:0">🍝 Menus de la semaine</h2>
+        <span class="spacer"></span>
+        <button class="btn tiny sun" id="genWeek">🎲 Nouvelle semaine</button>
+      </div>
+      <div class="muted small" id="weekLabel"></div>
+      <div class="muted small" style="margin-top:4px" id="seasonInfo"></div>
+      <div class="muted small" style="margin-top:4px">Soirs de semaine en moins de 20 min, week-end midi et soir. Gaz, four, Thermomix, Cookeo, plancha, raclette &amp; crêpière au programme.</div>
+    </div>
+    <div class="card" id="weekList"></div>
+  </section>
+
+  <!-- COURSES -->
+  <section class="view" id="v-courses">
+    <div class="card">
+      <div class="row">
+        <h2 style="margin:0">🛒 Liste de courses</h2>
+        <span class="spacer"></span>
+        <button class="btn tiny ghost" id="clearDone">🧹 Retirer les cochés</button>
+      </div>
+      <div class="muted small" style="margin-top:4px">Générée automatiquement depuis les menus (pour 4), sans le pain. Ajoute le reste à la main : le papier toilette ne se planifie pas dans un menu.</div>
+      <form class="row" id="addExtra" style="margin-top:12px">
+        <input type="text" id="extraName" placeholder="Ex. : lessive, Nutella de secours…" style="flex:1">
+        <button class="btn" type="submit">Ajouter</button>
+      </form>
+    </div>
+    <div class="card" id="shopList"></div>
+  </section>
+
+  <!-- AGENDA -->
+  <section class="view" id="v-agenda">
+    <div class="card">
+      <h2>📅 Planning familial</h2>
+      <form class="form" id="addEvent">
+        <label class="full">Quoi ?<input type="text" id="evTitle" placeholder="Entraînement, dentiste, match…" required></label>
+        <label>Jour<input type="date" id="evDate" required></label>
+        <label>Heure<input type="time" id="evTime"></label>
+        <label class="full">Qui ?
+          <select id="evWho">
+            <option>Toute la famille</option><option>Bruno</option><option>Les parents</option><option>Doris</option><option>Malo</option><option>Doris et Malo</option>
+          </select>
+        </label>
+        <button class="btn full" type="submit">➕ Ajouter au planning</button>
+      </form>
+    </div>
+    <div class="card" id="agendaList"></div>
+  </section>
+
+  <!-- PLUS -->
+  <section class="view" id="v-plus">
+    <div class="card"><h2>✨ Le reste du QG</h2><div class="muted small">Tout ce qui fait tourner la maison, à part les assiettes.</div></div>
+    <div class="tiles">
+      <button class="tile" data-go="noel"><span class="ic">🎄</span><b>Le coin Noël</b><span id="tileNoel" class="muted small"></span></button>
+      <button class="tile" data-go="stock"><span class="ic">🧊</span><b>Congélo &amp; placards</b><span id="tileStock" class="muted small"></span></button>
+      <button class="tile" data-go="maison"><span class="ic">🏠</span><b>Carnet de la maison</b><span id="tileMaison" class="muted small"></span></button>
+      <button class="tile" data-go="sorties"><span class="ic">🗺️</span><b>Sorties en famille</b><span id="tileSorties" class="muted small"></span></button>
+    </div>
+    <div class="card parent-only" style="margin-top:14px">
+      <h2>🔄 Mises à jour du QG</h2>
+      <div class="muted small" id="updInfo">Version installée : …</div>
+      <div class="small" id="updNotes" style="margin-top:6px"></div>
+      <div class="row" style="margin-top:10px"><button class="btn tiny ghost" id="updCheck">Vérifier</button><button class="btn tiny sun" id="updGo" style="display:none"></button></div>
+    </div>
+  </section>
+
+  <!-- NOEL -->
+  <section class="view" id="v-noel">
+    <button class="back" data-go="plus">← Retour</button>
+    <div class="card xmas">
+      <div class="row"><h2 style="margin:0">🎄 Le coin Noël</h2><span class="spacer"></span><span class="pill" id="noelCount"></span></div>
+      <div class="row" style="margin-top:10px">
+        <label class="small muted" style="font-weight:800">Budget total (€)</label>
+        <input type="number" id="noelBudget" min="0" step="10" style="width:110px">
+        <span class="spacer"></span><span class="small" id="noelSpent"></span>
+      </div>
+      <div class="bar"><div id="noelBar"></div></div>
+    </div>
+    <div class="card">
+      <h2>🎁 Nouvelle idée de cadeau</h2>
+      <form class="form" id="addGift">
+        <label>Pour qui ?<input type="text" id="gPour" list="gPeople" placeholder="Doris, Malo, Mamie…" required></label>
+        <label>Prix (€)<input type="number" id="gPrix" min="0" step="0.5"></label>
+        <label class="full">Le cadeau<input type="text" id="gIdee" placeholder="Ex. : casque audio, jeu de société…" required></label>
+        <datalist id="gPeople"><option>Doris</option><option>Malo</option><option>Bruno</option><option>Les grands-parents</option></datalist>
+        <button class="btn full" type="submit">Ajouter à la liste</button>
+      </form>
+      <div class="muted small" style="margin-top:8px">Touche l'étiquette d'un cadeau pour le faire avancer : 💡 idée → 🔎 trouvé → 📦 commandé → 🎁 emballé.</div>
+    </div>
+    <div id="giftList"></div>
+  </section>
+
+  <!-- STOCK -->
+  <section class="view" id="v-stock">
+    <button class="back" data-go="plus">← Retour</button>
+    <div class="card">
+      <h2>🧊 Congélo &amp; placards</h2>
+      <div class="muted small">Ce qui est en stock disparaît de la liste de courses, et les menus qui l'utilisent sont signalés 🧊.</div>
+      <form class="form" id="addStock" style="margin-top:12px">
+        <label class="full">Quoi ?<input type="text" id="sName" placeholder="Chili con carne, riz à risotto, lardons…" required></label>
+        <label>Quantité<input type="text" id="sQty" placeholder="2 portions, 1 paquet…"></label>
+        <label>Où ?<select id="sZone"><option value="congelo">🧊 Congélo</option><option value="frigo">🥶 Frigo</option><option value="placard">🥫 Placard</option></select></label>
+        <button class="btn full" type="submit">Ranger</button>
+      </form>
+    </div>
+    <div class="card" id="stockList"></div>
+  </section>
+
+  <!-- MAISON -->
+  <section class="view" id="v-maison">
+    <button class="back" data-go="plus">← Retour</button>
+    <div class="card">
+      <h2>🏠 Carnet de la maison</h2>
+      <div class="muted small">Les entretiens à ne pas oublier, avec la date du prochain passage.</div>
+      <div id="taskList" style="margin-top:8px"></div>
+    </div>
+    <div class="card parent-only">
+      <h2>➕ Nouvel entretien</h2>
+      <div class="chips" id="taskSugg"></div>
+      <form class="form" id="addTask" style="margin-top:10px">
+        <label class="full">Quoi ?<input type="text" id="tName" placeholder="Entretien chaudière, ramonage…" required></label>
+        <label>Tous les…<select id="tEvery"><option value="1">mois</option><option value="3">3 mois</option><option value="6">6 mois</option><option value="12" selected>ans</option><option value="24">2 ans</option><option value="60">5 ans</option></select></label>
+        <label>Dernière fois<input type="date" id="tLast"></label>
+        <button class="btn full" type="submit">Ajouter</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>📇 Les artisans &amp; dépanneurs</h2>
+      <div id="contactList"></div>
+      <form class="form" id="addContact" style="margin-top:10px">
+        <label>Nom<input type="text" id="cName" placeholder="Martin" required></label>
+        <label>Métier<input type="text" id="cJob" placeholder="Plombier, frigoriste…"></label>
+        <label class="full">Téléphone<input type="text" id="cTel" placeholder="06 12 34 56 78"></label>
+        <button class="btn full" type="submit">Ajouter le contact</button>
+      </form>
+    </div>
+  </section>
+
+  <!-- SORTIES -->
+  <section class="view" id="v-sorties">
+    <button class="back" data-go="plus">← Retour</button>
+    <div class="card">
+      <h2>🗺️ Sorties en famille</h2>
+      <div class="chips" id="outSugg"></div>
+      <form class="form" id="addOut" style="margin-top:10px">
+        <label class="full">L'idée<input type="text" id="oTitle" placeholder="Balade, parcours, week-end…" required></label>
+        <label>Type<select id="oType"><option>🌳 Balade</option><option>🧭 Terra Aventura</option><option>🏖️ Week-end</option><option>✈️ Voyage</option><option>🎉 Sortie</option></select></label>
+        <label>Quand ?<input type="date" id="oDate"></label>
+        <label class="full">Où / note<input type="text" id="oNote" placeholder="Lieu, prix, à réserver…"></label>
+        <button class="btn full" type="submit">Ajouter</button>
+      </form>
+    </div>
+    <div class="card">
+      <div class="row" style="margin-bottom:6px"><button class="btn tiny" data-outf="todo" id="ofTodo">À faire</button><button class="btn tiny ghost" data-outf="done" id="ofDone">Déjà faites</button></div>
+      <div id="outList"></div>
+    </div>
+  </section>
+
+</div>
+
+<nav class="tabs">
+  <button data-tab="home" class="on"><span class="ic">🏠</span>Accueil</button>
+  <button data-tab="menus"><span class="ic">🍝</span>Menus</button>
+  <button data-tab="courses"><span class="ic">🛒</span>Courses</button>
+  <button data-tab="agenda"><span class="ic">📅</span>Agenda</button>
+  <button data-tab="plus"><span class="ic">✨</span>Plus</button>
+</nav>
+<div class="toast" id="toast"></div>
+<div id="login"><form class="card" id="loginForm">
+  <div style="font-size:2.4rem">🏠</div><h2 style="justify-content:center">Le QG de la famille</h2>
+  <div class="muted small">Entre ton code pour ouvrir le QG.<br>Cet appareil s'en souviendra.</div>
+  <input type="password" id="loginCode" autocomplete="current-password" required>
+  <button class="btn" id="loginBtn" style="width:100%">Entrer</button>
+  <div class="small" id="loginErr" style="color:var(--coral);font-weight:700;margin-top:8px"></div>
+</form></div>
+
+<script>
+/* ================= RECETTES ================= */
+const F="Fruits & légumes",V="Boucherie & poisson",C="Crèmerie & œufs",E="Épicerie",B="Boulangerie",S="Surgelés";
+const R=[
+ // --- Soirs de semaine, < 20 min ---
+ {id:"carbo",t:"semaine",n:"Pâtes carbonara",e:"🍝",m:15,a:"Gaz",ing:[["Spaghetti","500 g",E],["Lardons","200 g",V],["Œufs","4",C],["Parmesan","80 g",C],["Salade verte","1",F]],st:["Cuire les pâtes.","Dorer les lardons à sec.","Mélanger jaunes + parmesan, hors du feu avec les pâtes et un peu d'eau de cuisson.","Salade à côté pour la caution « léger »."]},
+ {id:"wok",t:"semaine",n:"Wok de poulet aux légumes",e:"🥢",m:18,a:"Gaz",ing:[["Blancs de poulet","500 g",V],["Poêlée de légumes wok","750 g",S],["Nouilles chinoises","300 g",E],["Sauce soja","",E],["Gingembre","1 morceau",F]],st:["Émincer le poulet, le saisir à feu vif.","Ajouter les légumes surgelés, 5 min.","Nouilles cuites + soja + gingembre râpé, on fait sauter."]},
+ {id:"quesa",t:"semaine",n:"Quesadillas poulet-fromage",e:"🌮",m:15,a:"Gaz",ing:[["Tortillas de blé","8",E],["Poulet rôti (restes ou tranches)","300 g",V],["Emmental râpé","200 g",C],["Poivron","1",F],["Maïs","1 boîte",E],["Avocat","2",F]],st:["Garnir une tortilla, refermer.","Dorer 2 min par face à la poêle.","Guacamole express avec les avocats."]},
+ {id:"saumon",t:"semaine",n:"Saumon, riz & haricots verts",e:"🐟",m:15,a:"Cookeo",ing:[["Pavés de saumon","4",V],["Riz basmati","300 g",E],["Haricots verts","600 g",S],["Citron","1",F]],st:["Riz + eau au Cookeo, cuisson sous pression 8 min.","Pendant ce temps : saumon à la poêle, haricots à la vapeur.","Filet de citron, et c'est servi."]},
+ {id:"croque",t:"semaine",n:"Croque-monsieur & salade",e:"🥪",m:15,a:"Four",ing:[["Pain de mie","1 paquet",B],["Jambon blanc","8 tranches",V],["Emmental râpé","150 g",C],["Crème fraîche","20 cl",C],["Salade verte","1",F]],st:["Monter les croques, un peu de crème dessus.","Four à 220 °C, 10 min.","Salade obligatoire (oui, même pour Doris et Malo)."]},
+ {id:"veloute",t:"semaine",n:"Velouté de légumes & tartines fromage",e:"🥣",m:20,a:"Thermomix",ing:[["Carottes","500 g",F],["Pommes de terre","300 g",F],["Poireau","1",F],["Bouillon de légumes","1 cube",E],["Baguette","1",B],["Chèvre ou comté","200 g",C]],st:["Tout au Thermomix : 20 min / 100 °C / vit. 1, puis mixer.","Tartines gratinées au four pendant la cuisson."]},
+ {id:"galettes",t:"semaine",n:"Galettes complètes",e:"🫓",m:15,a:"Crêpière",ing:[["Galettes de sarrasin","8",E],["Jambon blanc","4 tranches",V],["Œufs","6",C],["Emmental râpé","200 g",C],["Salade verte","1",F]],st:["Chauffer la crêpière.","Galette + emmental + jambon + œuf, replier les bords.","Chacun fait la sienne : c'est l'atelier du soir."]},
+ {id:"burger",t:"semaine",n:"Burgers maison à la plancha",e:"🍔",m:20,a:"Plancha",ing:[["Steaks hachés","4",V],["Pains burger","4",B],["Cheddar","4 tranches",C],["Tomates","2",F],["Oignon rouge","1",F],["Salade verte","1",F]],st:["Plancha bien chaude, steaks 3 min par face.","Toaster les pains, cheddar sur la viande.","Montage libre. Frites optionnelles, fierté garantie."]},
+ {id:"curry",t:"semaine",n:"Curry de pois chiches coco",e:"🍛",m:15,a:"Cookeo",ing:[["Pois chiches","2 boîtes",E],["Lait de coco","40 cl",E],["Tomates concassées","1 boîte",E],["Épinards","300 g",S],["Pâte de curry","1 c. à s.",E],["Riz basmati","300 g",E]],st:["Dorer la pâte de curry au Cookeo.","Ajouter pois chiches, tomates, coco, épinards : 5 min sous pression.","Avec le riz. Version douce pour qui veut."]},
+ {id:"thon",t:"semaine",n:"Pâtes au thon & tomate",e:"🍅",m:15,a:"Gaz",ing:[["Pennes","500 g",E],["Thon au naturel","2 boîtes",E],["Coulis de tomate","50 cl",E],["Olives","1 petit pot",E],["Courgette","1",F]],st:["Cuire les pâtes.","Sauce : courgette en dés, coulis, thon, olives, 10 min.","Mélanger. Fin."]},
+ {id:"shaksh",t:"semaine",n:"Shakshuka (œufs à la tomate)",e:"🍳",m:20,a:"Gaz",ing:[["Œufs","8",C],["Tomates concassées","2 boîtes",E],["Poivron","2",F],["Oignon","1",F],["Feta","200 g",C],["Pain pita","4",B]],st:["Revenir oignon et poivrons, ajouter les tomates.","Creuser des puits, casser les œufs, couvrir 6 min.","Feta émiettée, pita pour saucer."]},
+ {id:"gnocchi",t:"semaine",n:"Gnocchis poêlés, pesto & tomates cerises",e:"🥔",m:12,a:"Gaz",ing:[["Gnocchis","1 kg",C],["Pesto","1 pot",E],["Tomates cerises","250 g",F],["Mozzarella","2 boules",C],["Roquette","1 sachet",F]],st:["Dorer les gnocchis à la poêle, sans les cuire avant.","Tomates cerises 2 min, pesto hors du feu.","Mozzarella et roquette par-dessus."]},
+ {id:"papillote",t:"semaine",n:"Papillotes de cabillaud & semoule",e:"🐠",m:15,a:"Micro-ondes",ing:[["Dos de cabillaud","4",V],["Courgettes","2",F],["Citron","1",F],["Semoule","300 g",E],["Herbes de Provence","",E]],st:["Poisson + rondelles de courgette + citron en papillote.","Micro-ondes 6 à 8 min.","Semoule à l'eau bouillante, 5 min à couvert."]},
+ {id:"wraps",t:"semaine",n:"Wraps de bœuf épicé",e:"🌯",m:15,a:"Gaz",ing:[["Bœuf haché","500 g",V],["Tortillas de blé","8",E],["Haricots rouges","1 boîte",E],["Salade iceberg","1",F],["Tomates","2",F],["Fromage blanc","200 g",C]],st:["Saisir le bœuf avec paprika et cumin, ajouter les haricots.","Garnir : salade, tomate, fromage blanc.","Rouler, manger, recommencer."]},
+ {id:"poulet_pure",t:"semaine",n:"Escalopes de poulet & purée express",e:"🍗",m:20,a:"Thermomix",ing:[["Escalopes de poulet","4",V],["Pommes de terre","1 kg",F],["Lait","30 cl",C],["Beurre","50 g",C],["Brocolis","500 g",S]],st:["Purée au Thermomix (pommes de terre, lait, beurre).","Escalopes à la poêle, 4 min par face.","Brocolis vapeur dans le Varoma pendant la purée."]},
+ // --- Week-end ---
+ {id:"raclette",t:"weekend",n:"Raclette party",e:"🧀",m:20,a:"Appareil à raclette",ing:[["Fromage à raclette","800 g",C],["Pommes de terre","1,5 kg",F],["Charcuterie assortie","400 g",V],["Cornichons","1 pot",E],["Salade verte","1",F]],st:["Pommes de terre à la vapeur (Thermomix ou cocotte).","Allumer l'appareil, sortir la charcuterie.","Régler les disputes de poêlons."]},
+ {id:"rôti",t:"weekend",n:"Poulet rôti & pommes de terre",e:"🐔",m:80,a:"Four",ing:[["Poulet fermier","1",V],["Pommes de terre grenaille","1 kg",F],["Ail","1 tête",F],["Thym","",E],["Haricots verts","600 g",S]],st:["Poulet au four 200 °C, 1 h 15, arroser de temps en temps.","Grenailles autour au bout de 30 min.","Le dimanche midi parfait."]},
+ {id:"chili",t:"weekend",n:"Chili con carne",e:"🌶️",m:35,a:"Cookeo",ing:[["Bœuf haché","600 g",V],["Haricots rouges","2 boîtes",E],["Tomates concassées","2 boîtes",E],["Oignons","2",F],["Poivron","1",F],["Riz","400 g",E]],st:["Dorer oignons et viande au Cookeo.","Épices, tomates, haricots : 15 min sous pression.","Faire double dose, congeler la moitié pour un soir de semaine."]},
+ {id:"lasagnes",t:"weekend",n:"Lasagnes maison",e:"🥘",m:75,a:"Four",ing:[["Feuilles de lasagnes","1 paquet",E],["Bœuf haché","600 g",V],["Coulis de tomate","70 cl",E],["Lait","1 L",C],["Beurre","60 g",C],["Farine","60 g",E],["Emmental râpé","200 g",C]],st:["Bolognaise à la cocotte, béchamel au Thermomix.","Monter les couches.","Four 180 °C, 40 min."]},
+ {id:"brochettes",t:"weekend",n:"Brochettes plancha & taboulé",e:"🍢",m:40,a:"Plancha",ing:[["Brochettes de volaille","8",V],["Semoule","300 g",E],["Concombre","1",F],["Tomates","3",F],["Menthe","1 bouquet",F],["Citron","2",F]],st:["Taboulé le matin, au frais.","Brochettes sur la plancha, 12 min en tournant.","Si soleil : apéro dehors."]},
+ {id:"potaufeu",t:"weekend",n:"Pot-au-feu",e:"🍲",m:60,a:"Autocuiseur",ing:[["Bœuf à pot-au-feu","1,2 kg",V],["Os à moelle","2",V],["Carottes","6",F],["Poireaux","3",F],["Navets","4",F],["Pommes de terre","800 g",F]],st:["Viande dans l'autocuiseur, couvrir d'eau, 30 min après sifflement.","Ajouter les légumes, 15 min de plus.","Le bouillon fait une soupe pour lundi."]},
+ {id:"pizza",t:"weekend",n:"Pizzas maison",e:"🍕",m:60,a:"Thermomix + four",ing:[["Farine","500 g",E],["Levure de boulanger","1 sachet",E],["Coulis de tomate","50 cl",E],["Mozzarella","3 boules",C],["Jambon blanc","4 tranches",V],["Champignons","250 g",F]],st:["Pâte au Thermomix, 1 h de pousse.","Étaler, chacun garnit sa pizza.","Four le plus chaud possible, 12 min."]},
+ {id:"crepes",t:"weekend",n:"Soirée crêpes",e:"🥞",m:30,a:"Crêpière",ing:[["Farine","500 g",E],["Œufs","6",C],["Lait","1 L",C],["Sucre","",E],["Pâte à tartiner","1 pot",E],["Bananes","4",F]],st:["Pâte au Thermomix, repos 30 min.","Crêpière au centre de la table.","Doris et Malo font les crêpes, Bruno juge les retournés."]},
+ {id:"moules",t:"weekend",n:"Moules marinières & frites au four",e:"🦪",m:35,a:"Gaz + four",ing:[["Moules de bouchot","3 kg",V],["Échalotes","3",F],["Vin blanc","20 cl",E],["Persil","1 bouquet",F],["Frites au four","1 kg",S]],st:["Frites au four, 220 °C.","Échalotes, vin blanc, moules à couvert, 6 min en remuant.","Persil. Le goût de la Charente-Maritime."]},
+ {id:"blanquette",t:"weekend",n:"Blanquette de veau",e:"🍚",m:45,a:"Cookeo",ing:[["Sauté de veau","1 kg",V],["Carottes","4",F],["Champignons","250 g",F],["Crème fraîche","20 cl",C],["Jaune d'œuf","1",C],["Riz","400 g",E]],st:["Dorer la viande, ajouter carottes, eau, bouillon : 20 min sous pression.","Champignons, crème et jaune d'œuf en fin de cuisson.","Riz à côté."]},
+ {id:"hachis",t:"weekend",n:"Hachis parmentier",e:"🥧",m:50,a:"Thermomix + four",ing:[["Bœuf haché","600 g",V],["Pommes de terre","1,2 kg",F],["Lait","30 cl",C],["Beurre","50 g",C],["Oignons","2",F],["Emmental râpé","100 g",C]],st:["Purée au Thermomix, viande et oignons à la poêle.","Monter dans un plat, emmental dessus.","Four 200 °C, 20 min."]},
+ {id:"gratin",t:"weekend",n:"Gratin dauphinois & jambon braisé",e:"🫕",m:75,a:"Four",ing:[["Pommes de terre","1,5 kg",F],["Crème fraîche","40 cl",C],["Lait","50 cl",C],["Ail","2 gousses",F],["Jambon braisé","4 tranches",V],["Salade verte","1",F]],st:["Pommes de terre en fines rondelles, crème + lait + ail.","Four 160 °C, 1 h.","Jambon réchauffé 10 min à la fin."]}
+];
+/* Nouvelles recettes de saison */
+R.push(
+ {id:"potiron",t:"semaine",n:"Velouté de potiron & croûtons",e:"🎃",m:20,a:"Thermomix",ing:[["Potiron","1 kg",F],["Pommes de terre","300 g",F],["Oignon","1",F],["Crème fraîche","20 cl",C],["Bouillon de légumes","1 cube",E],["Baguette","1",B]],st:["Potiron, pommes de terre, oignon et bouillon au Thermomix : 20 min / 100 °C.","Mixer avec la crème.","Croûtons dorés à la poêle, et on se réchauffe."]},
+ {id:"endives",t:"semaine",n:"Poêlée d'endives, jambon & pommes vapeur",e:"🥬",m:18,a:"Cookeo",ing:[["Endives","8",F],["Jambon blanc","4 tranches",V],["Pommes de terre","800 g",F],["Emmental râpé","100 g",C],["Crème fraîche","20 cl",C]],st:["Pommes de terre au Cookeo, 8 min sous pression.","Endives émincées à la poêle, 8 min, avec le jambon en lanières.","Crème et emmental pour finir. Même les sceptiques des endives y passent."]},
+ {id:"tartif",t:"semaine",n:"Tartiflette express à la poêle",e:"🏔️",m:20,a:"Gaz",ing:[["Pommes de terre","1 kg",F],["Lardons","200 g",V],["Oignons","2",F],["Reblochon","1",C],["Salade verte","1",F]],st:["Pommes de terre en dés à la poêle, 12 min à couvert.","Lardons et oignons.","Reblochon en tranches dessus, couvercle 3 min. Salade pour se donner bonne conscience."]},
+ {id:"asperges",t:"semaine",n:"Asperges, œufs mollets & jambon cru",e:"🌱",m:15,a:"Gaz",ing:[["Asperges vertes","2 bottes",F],["Œufs","8",C],["Jambon cru","8 tranches",V],["Pommes de terre grenaille","800 g",F],["Parmesan","50 g",C]],st:["Grenailles à la vapeur (Varoma ou cocotte).","Asperges 6 min à l'eau bouillante, œufs 6 min aussi.","Parmesan râpé dessus. Le printemps dans l'assiette."]},
+ {id:"petitspois",t:"semaine",n:"Petits pois-carottes & saucisses",e:"🌭",m:15,a:"Cookeo",ing:[["Petits pois","600 g",S],["Carottes","4",F],["Saucisses de Toulouse","4",V],["Oignons nouveaux","1 botte",F]],st:["Dorer les saucisses au Cookeo, réserver.","Carottes, petits pois, oignons, un fond d'eau : 6 min sous pression.","Remettre les saucisses 2 min."]},
+ {id:"saladepates",t:"semaine",n:"Salade de pâtes poulet-tomates-mozza",e:"🥗",m:15,a:"Gaz",ing:[["Fusilli","400 g",E],["Blancs de poulet","400 g",V],["Tomates cerises","300 g",F],["Mozzarella","2 boules",C],["Basilic","1 bouquet",F],["Pesto","1 petit pot",E]],st:["Cuire les pâtes, les refroidir.","Poulet en dés à la poêle.","Tout mélanger avec pesto et basilic. Parfait quand il fait 30 °C."]},
+ {id:"melon",t:"semaine",n:"Assiette d'été : melon, jambon & tomates-mozza",e:"🍈",m:10,a:"Aucun (zéro cuisson)",ing:[["Melons charentais","2",F],["Jambon cru","8 tranches",V],["Tomates","4",F],["Mozzarella","2 boules",C],["Baguette","1",B]],st:["Couper le melon (charentais, évidemment).","Tomates-mozza, basilic, huile d'olive.","Zéro cuisson, zéro vaisselle de casserole."]},
+ {id:"navarin",t:"weekend",n:"Navarin d'agneau printanier",e:"🐑",m:45,a:"Cookeo",ing:[["Épaule d'agneau en morceaux","1 kg",V],["Carottes nouvelles","1 botte",F],["Navets nouveaux","1 botte",F],["Petits pois","400 g",S],["Pommes de terre grenaille","600 g",F]],st:["Dorer l'agneau au Cookeo.","Légumes, bouillon, thym : 25 min sous pression.","Petits pois en fin de cuisson."]},
+ {id:"gigot",t:"weekend",n:"Gigot d'agneau & flageolets",e:"🍖",m:90,a:"Four",ing:[["Gigot d'agneau","1,5 kg",V],["Flageolets","2 boîtes",E],["Ail","1 tête",F],["Romarin","",F],["Tomates","3",F]],st:["Piquer le gigot d'ail, romarin.","Four 200 °C, 15 min par livre.","Flageolets réchauffés avec le jus. Le classique de Pâques."]},
+ {id:"sardines",t:"weekend",n:"Sardines au barbecue & salade de tomates",e:"🐟",m:30,a:"Barbecue",ing:[["Sardines fraîches","1,5 kg",V],["Tomates","6",F],["Oignon rouge","1",F],["Pommes de terre","1 kg",F],["Citron","2",F]],st:["Salade de pommes de terre tiède.","Sardines au barbecue bien chaud, 3 min par face.","Tomates, oignon rouge, citron. Ambiance port de La Rochelle."]},
+ {id:"grillades",t:"weekend",n:"Grillades & salade de pommes de terre",e:"🔥",m:40,a:"Barbecue / plancha",ing:[["Chipolatas & merguez","1 kg",V],["Côtes de porc","4",V],["Pommes de terre","1 kg",F],["Échalotes","2",F],["Courgettes","2",F],["Poivrons","2",F]],st:["Pommes de terre vapeur, vinaigrette à l'échalote.","Légumes en tranches à la plancha.","Grillades au barbecue. Bruno au poste de commandement."]},
+ {id:"mouclade",t:"weekend",n:"Mouclade charentaise",e:"🦪",m:35,a:"Gaz",ing:[["Moules de bouchot","3 kg",V],["Échalotes","3",F],["Vin blanc","20 cl",E],["Crème fraîche","25 cl",C],["Curry doux","1 c. à c.",E],["Baguette","2",B]],st:["Ouvrir les moules au vin blanc et échalotes.","Filtrer le jus, ajouter crème et curry, réduire.","Napper les moules. Spécialité maison, au sens propre."]},
+ {id:"choucroute",t:"weekend",n:"Choucroute garnie",e:"🥨",m:45,a:"Autocuiseur",ing:[["Choucroute crue","1,5 kg",F],["Saucisses de Strasbourg","8",V],["Lard fumé","400 g",V],["Pommes de terre","1 kg",F],["Vin blanc","25 cl",E]],st:["Choucroute rincée, vin blanc et lard dans l'autocuiseur, 20 min.","Pommes de terre par-dessus, 10 min.","Saucisses réchauffées à part."]}
+);
+/* Recettes Cookidoo (Thermomix) : ingrédients pour 4, étapes guidées sur Cookidoo */
+const CK="https://cookidoo.fr/recipes/recipe/fr-FR/";
+R.push(
+ {id:"ck_risotto_poulet",t:"semaine",n:"Risotto de poulet aux champignons",e:"🍄",m:30,a:"Thermomix",url:CK+"r106056",ing:[["Filet de poulet","300 g",V],["Champignons de Paris","400 g",F],["Riz à risotto","300 g",E],["Échalotes","70 g",F],["Vin blanc sec","10 cl",E],["Parmesan","30 g",C],["Crème liquide","5 cl",C],["Bouillon de légumes","1 cube",E]],st:[]},
+ {id:"ck_pates_chorizo",t:"semaine",n:"Pâtes à la sauce tomate et au chorizo",e:"🌶️",m:25,a:"Thermomix",url:CK+"r54142",ing:[["Pennes","300 g",E],["Chorizo","100 g",V],["Sauce tomate","300 g",E],["Bouillon de volaille","1 cube",E],["Origan","",E]],st:[]},
+ {id:"ck_veloute_champi",t:"semaine",n:"Velouté de champignons & tartines",e:"🥣",m:20,a:"Thermomix",url:CK+"r54172",ing:[["Champignons de Paris","400 g",F],["Lait","20 cl",C],["Crème fraîche","50 g",C],["Farine","50 g",E],["Bouillon de légumes","1 cube",E],["Persil","1 bouquet",F],["Baguette","1",B]],st:[]},
+ {id:"ck_filet_mignon",t:"semaine",n:"Filet mignon à la moutarde & pommes de terre",e:"🥩",m:30,a:"Thermomix",url:CK+"r130298",ing:[["Filet mignon de porc","1 à 2",V],["Pommes de terre","500 g",F],["Champignons de Paris","300 g",F],["Oignon","1",F],["Madère","7,5 cl",E],["Moutarde à l'ancienne & forte","",E],["Crème fraîche","2 c. à s.",C],["Lait","10 cl",C],["Fécule de maïs","1 c. à s.",E]],st:[]},
+ {id:"ck_risotto_bacon",t:"semaine",n:"Risotto au bacon & champignons",e:"🥓",m:25,a:"Thermomix",url:CK+"r673514",ing:[["Bacon en tranches","200 g",V],["Champignons de Paris","200 g",F],["Riz à risotto","300 g",E],["Oignon","1",F],["Vin blanc sec","6 cl",E],["Sauge fraîche","12 feuilles",F],["Bouillon de légumes","1 cube",E]],st:[]},
+ {id:"ck_dinde_chataignes",t:"semaine",n:"Émincé de dinde, châtaignes & champignons",e:"🌰",m:25,a:"Thermomix",url:CK+"r375665",ing:[["Dinde","500 g",V],["Châtaignes cuites","400 g",E],["Champignons des bois","300 g",S],["Crème liquide","5 cl",C],["Lait","12 cl",C],["Fécule de maïs","2 c. à c.",E],["Bouillon de volaille","1 cube",E]],st:[]},
+ {id:"ck_flammekueche",t:"semaine",n:"Flammekueche lardons & champignons",e:"🍕",m:30,a:"Thermomix + four",url:CK+"r783414",ing:[["Farine","300 g",E],["Lardons","150 g",V],["Champignons de Paris","100 g",F],["Oignon rouge","1",F],["Crème fraîche","100 g",C],["Gruyère râpé","50 g",C],["Salade verte","1",F]],st:[]}
+);
+/* Saisons : a = automne, h = hiver, p = printemps, e = été */
+const SAISON={carbo:"ahpe",wok:"ahpe",quesa:"ape",saumon:"ahpe",croque:"ahp",veloute:"ah",galettes:"ahpe",burger:"pe",curry:"ah",thon:"pe",shaksh:"ea",gnocchi:"pe",papillote:"pe",wraps:"ahpe",poulet_pure:"ah",
+ raclette:"ah","rôti":"ahpe",chili:"ah",lasagnes:"ahp",brochettes:"pe",potaufeu:"ah",pizza:"ahpe",crepes:"ahpe",moules:"ea",blanquette:"ah",hachis:"ah",gratin:"ah",
+ potiron:"a",endives:"h",tartif:"h",asperges:"p",petitspois:"p",saladepates:"e",melon:"e",navarin:"p",gigot:"p",sardines:"e",grillades:"e",mouclade:"ea",choucroute:"h",
+ ck_risotto_poulet:"ah",ck_pates_chorizo:"ahpe",ck_veloute_champi:"ah",ck_filet_mignon:"ahp",ck_risotto_bacon:"ah",ck_dinde_chataignes:"ah",ck_flammekueche:"ahp"};
+R.forEach(r=>r.s=SAISON[r.id]||"ahpe");
+const SEASONS={
+ a:{n:"automne",e:"🍂",prod:"potiron, courge, champignons, poireaux, pommes, poires, châtaignes, moules"},
+ h:{n:"hiver",e:"❄️",prod:"endives, poireaux, choux, carottes, navets, oranges, clémentines, huîtres"},
+ p:{n:"printemps",e:"🌱",prod:"asperges, petits pois, radis, carottes nouvelles, épinards, fraises, agneau"},
+ e:{n:"été",e:"☀️",prod:"tomates, courgettes, poivrons, aubergines, melon charentais, pêches, sardines"}
+};
+function currentSeason(d=new Date()){const m=d.getMonth();return m===11||m<=1?"h":m<=4?"p":m<=7?"e":"a"}
+const SEASON=currentSeason();
+function weekPool(){const p=shuffle(seasonPool("semaine"));const ck=p.filter(r=>r.url).slice(0,2);const rest=p.filter(r=>!ck.includes(r));return shuffle(ck.concat(rest.slice(0,5-ck.length))).concat(rest.slice(5-ck.length))}
+function seasonPool(type){const p=R.filter(r=>r.t===type&&r.s.includes(SEASON));return p.length>=(type==="semaine"?5:4)?p:R.filter(r=>r.t===type)}
+const DAYS=[["lun","Lundi",["d"]],["mar","Mardi",["d"]],["mer","Mercredi",["d"]],["jeu","Jeudi",["d"]],["ven","Vendredi",["d"]],["sam","Samedi",["m","d"]],["dim","Dimanche",["m","d"]]];
+const SLOTNAME={m:"Midi",d:"Soir"};
+
+/* ================= ÉTAT ================= */
+const state={
+  menu:{weekStart:null,slots:{},custom:{}},
+  courses:{checked:{},extras:[]},
+  agenda:{events:[]},
+  runs:{runs:[]}
+};
+let db=null, sample=null, open={};
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const uid=()=>Math.random().toString(36).slice(2,10);
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),2200)}
+
+function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
+function mondayOf(d){const x=new Date(d);x.setHours(0,0,0,0);const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);return x}
+function parseYmd(s){const [y,m,d]=s.split("-").map(Number);return new Date(y,m-1,d)}
+const fmtDay=d=>d.toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});
+const thisMonday=ymd(mondayOf(new Date()));
+
+function recipe(id){return R.find(r=>r.id===id)||state.menu.custom[id]}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
+function slotType(key){return key.startsWith("sam")||key.startsWith("dim")?"weekend":"semaine"}
+function allSlots(){const o=[];DAYS.forEach(([k,,s])=>s.forEach(x=>o.push(k+"_"+x)));return o}
+
+function generateWeek(){
+  const sem=weekPool(), we=shuffle(seasonPool("weekend"));
+  const slots={};let i=0,j=0;
+  allSlots().forEach(k=>{slots[k]=slotType(k)==="semaine"?sem[i++].id:we[j++].id});
+  // garder les recettes Claude encore utilisées : aucune après une nouvelle semaine
+  state.menu={weekStart:thisMonday,slots,custom:{},v:3};
+  state.courses.checked={};
+  save("menu");save("courses");render();
+  toast("🎲 Nouvelle semaine tirée au sort !");
+}
+function swapSlot(key){
+  const used=new Set(Object.values(state.menu.slots));
+  const pool=seasonPool(slotType(key)).filter(r=>!used.has(r.id));
+  const pick=pool.length?pool[Math.floor(Math.random()*pool.length)]:R.filter(r=>r.t===slotType(key))[0];
+  state.menu.slots[key]=pick.id;cleanupCustom();save("menu");render();
+  toast(pick.e+" Va pour : "+pick.n);
+}
+function cleanupCustom(){const used=new Set(Object.values(state.menu.slots));Object.keys(state.menu.custom).forEach(k=>{if(!used.has(k))delete state.menu.custom[k]})}
+
+async function claudeSlot(key,btn){
+  if(!sample){toast("Claude n'est pas joignable depuis cette vue");return}
+  const type=slotType(key);
+  const deja=Object.values(state.menu.slots).map(id=>recipe(id)?.n).filter(Boolean).join(", ");
+  const prompt=`Tu proposes UNE recette de ${type==="semaine"?"dîner de semaine prête en 20 minutes maximum":"repas du week-end (on a plus de temps, plat convivial)"} pour une famille de 4 (2 adultes, ados de 17 et 12 ans), en Charente-Maritime.
+Contraintes : équilibré/plutôt léger, qui plaît aux ados, cuisine française du quotidien ou du monde accessible.
+Équipement disponible : plaques gaz, four, micro-ondes, barbecue/plancha, Thermomix, Cookeo, autocuiseur, appareil à raclette, crêpière.
+Saison actuelle : ${SEASONS[SEASON].n}. Utilise des produits de saison (par exemple : ${SEASONS[SEASON].prod}).
+Évite ces plats déjà au menu : ${deja}.
+Réponds UNIQUEMENT en JSON, sans texte autour, au format :
+{"n":"nom du plat","e":"un emoji","m":minutes(entier),"a":"appareil principal","ing":[["ingrédient","quantité pour 4","rayon"]],"st":["étape courte","..."]}
+Rayons autorisés : "${F}", "${V}", "${C}", "${E}", "${B}", "${S}". 4 à 7 ingrédients, 3 étapes max, en français.`;
+  btn.disabled=true;const old=btn.textContent;btn.textContent="…";
+  try{
+    let out;
+    try{out=await sample.json(prompt,{modelTier:"quick"})}
+    catch(e){if(e&&e.code)throw e;const r=await sample(prompt,{modelTier:"quick"});out=JSON.parse(r.text.replace(/^[^{]*/,"").replace(/[^}]*$/,""))}
+    if(!out||!out.n||!Array.isArray(out.ing))throw new Error("format");
+    const id="c_"+uid();
+    const ok=[F,V,C,E,B,S];
+    state.menu.custom[id]={id,t:type,n:String(out.n).slice(0,80),e:String(out.e||"✨").slice(0,4),m:parseInt(out.m)||20,a:String(out.a||"").slice(0,40),claude:true,
+      ing:out.ing.slice(0,10).map(x=>[String(x[0]||"").slice(0,60),String(x[1]||"").slice(0,30),ok.includes(x[2])?x[2]:E]),
+      st:(out.st||[]).slice(0,4).map(s=>String(s).slice(0,200))};
+    state.menu.slots[key]=id;cleanupCustom();save("menu");render();
+    toast("✨ Claude propose : "+state.menu.custom[id].n);
+  }catch(e){
+    if(e&&e.code==="not_granted"){sample=null;render();toast("Accès à Claude refusé : on reste sur les recettes maison")}
+    else if(e&&e.code==="rate_limited")toast("Claude reprend son souffle, réessaie dans un instant");
+    else toast("Raté ! Claude a renversé la casserole, réessaie");
+    btn.disabled=false;btn.textContent=old;
+  }
+}
+
+/* ================= SAUVEGARDE (db) ================= */
+const DOCS=["menu","courses","agenda"];
+const writing={},pending={};
+function snapData(s){if(!s)return null;if(typeof s.data==="function")return s.data();if(s.exists===false)return null;return s.data!==undefined?s.data:s}
+async function save(name){
+  if(!db)return;
+  if(writing[name]){pending[name]=true;return}
+  writing[name]=true;
+  try{await db.doc("state/"+name).set(JSON.parse(JSON.stringify(state[name])))}
+  catch(e){setPill("⚠️ Pas sauvegardé","warn")}
+  writing[name]=false;
+  if(pending[name]){pending[name]=false;save(name)}
+}
+function setPill(t,cls){const p=$("#syncPill");p.textContent=t;p.className="pill"+(cls?" "+cls:"")}
+
+/* ===== Stockage auto-hébergé (api.php) : imite l'interface db utilisée plus haut ===== */
+let ROLE=null;const VERS={},SUBS={};
+async function api(url,opts={}){const r=await fetch(url,{credentials:"same-origin",...opts,headers:{"X-QG":"1",...(opts.body?{"Content-Type":"application/json"}:{}),...(opts.headers||{})}});
+  let j=null;try{j=await r.json()}catch(e){}return {status:r.status,j}}
+async function pull(name,force){const {status,j}=await api("api.php?doc="+name);
+  if(status===401){showLogin();throw new Error("login")}
+  if(status===403){VERS[name]=0;return {data:()=>null,_skip:!force}}
+  if(status!==200)throw new Error(status);
+  const changed=VERS[name]!==j.version;VERS[name]=j.version;return {data:()=>j.data,_skip:!force&&!changed}}
+const apiDb={doc(path){const name=path.split("/")[1];return{
+  onSnapshot(cb,err){SUBS[name]=cb;pull(name,true).then(cb).catch(e=>err&&err(e))},
+  async set(data){const {status,j}=await api("api.php?doc="+name,{method:"POST",body:JSON.stringify({data,version:VERS[name]||0})});
+    if(status===200){VERS[name]=j.version;setPill("✅ Synchronisé");return}
+    if(status===409){VERS[name]=j.version;writing[name]=false;if(j.data)Object.assign(state[name],j.data);render();toast("🔄 Quelqu'un a modifié en même temps : c'est rechargé, refais ta modif");return}
+    if(status===401){showLogin()}
+    if(status===403){toast("🔒 Réservé aux parents");return}
+    throw new Error(status)}}}};
+async function poll(){if(!ROLE||document.hidden)return;for(const name of DOCS){if(writing[name])continue;
+  try{const s=await pull(name,false);if(!s._skip&&SUBS[name])SUBS[name](s)}catch(e){if(e.message==="login")return;setPill("⚠️ Hors ligne","warn")}}}
+function showLogin(msg){ROLE=null;document.body.classList.add("locked");$("#loginErr").textContent=msg||"";setTimeout(()=>$("#loginCode").focus(),50)}
+async function boot(){
+  render();
+  const {status,j}=await api("api.php?action=me").catch(()=>({status:0}));
+  if(status===503){showLogin("Le QG n'est pas encore installé : ouvre setup.php.");return}
+  if(status!==200){showLogin();return}
+  start(j.role);
+}
+function start(role){
+  ROLE=role;document.body.classList.remove("locked");document.body.classList.toggle("kid",role==="enfant");
+  db=apiDb;sample=null;
+  let loaded=0;
+  DOCS.forEach(name=>{
+    let first=true;
+    db.doc("state/"+name).onSnapshot(s=>{
+      const d=snapData(s);
+      if(d&&typeof d==="object"&&!writing[name])Object.assign(state[name],d);
+      if(first){first=false;loaded++;if(loaded===DOCS.length){setPill("✅ Synchronisé");if(ROLE==="parent"&&(!state.menu.weekStart||state.menu.v!==3)){generateWeekSilently();state.courses.checked={};save("menu");save("courses")}}}
+      render();
+    },err=>{if(err&&err.message!=="login")setPill("⚠️ Hors ligne","warn")});
+  });
+  if(role==="parent")setTimeout(()=>checkUpdate(true),2500);
+  if(!start._t){start._t=setInterval(poll,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()})}
+}
+$("#loginForm").onsubmit=async e=>{e.preventDefault();const code=$("#loginCode").value;$("#loginBtn").disabled=true;
+  const {status,j}=await api("api.php?action=login",{method:"POST",body:JSON.stringify({code})}).catch(()=>({status:0,j:null}));
+  $("#loginBtn").disabled=false;$("#loginCode").value="";
+  if(status===200){start(j.role);toast(j.role==="parent"?"👋 Bienvenue au QG !":"👋 Salut la team !")}
+  else showLogin((j&&j.message)||"Serveur injoignable")};
+
+/* ===== Mises à jour (GitHub) ===== */
+function verCmp(a,b){const x=String(a).split(".").map(Number),y=String(b).split(".").map(Number);for(let i=0;i<3;i++){const d=(x[i]||0)-(y[i]||0);if(d)return d}return 0}
+async function checkUpdate(silent){
+  if(ROLE!=="parent")return;
+  if(!silent){$("#updCheck").disabled=true;$("#updInfo").textContent="Je regarde sur GitHub…"}
+  const {status,j}=await api("api.php?action=version").catch(()=>({status:0}));
+  $("#updCheck").disabled=false;
+  if(status!==200){$("#updInfo").textContent="Impossible de vérifier pour le moment.";return}
+  $("#updInfo").textContent="Version installée : "+j.local+(j.remote?" · dernière version : "+j.remote:"");
+  const newer=j.remote&&verCmp(j.remote,j.local)>0;
+  $("#updGo").style.display=newer?"":"none";
+  $("#updGo").textContent=newer?"⬆️ Installer la "+j.remote:"";
+  $("#updNotes").textContent=newer&&j.notes?"Nouveautés : "+j.notes:"";
+  if(newer&&silent)toast("🆕 Nouvelle version du QG dispo (onglet ✨ Plus)");
+  else if(!newer&&!silent)toast(j.remote?"👌 Le QG est à jour":"GitHub ne répond pas, réessaie plus tard");
+}
+$("#updCheck").onclick=()=>checkUpdate(false);
+$("#updGo").onclick=async()=>{
+  $("#updGo").disabled=true;$("#updGo").textContent="⏳ Installation…";
+  const {status,j}=await api("api.php?action=update",{method:"POST"}).catch(()=>({status:0,j:null}));
+  if(status===200){toast("✅ Mise à jour installée ("+j.files+" fichiers), redémarrage…");setTimeout(()=>location.reload(),1500)}
+  else{$("#updGo").disabled=false;$("#updGo").textContent="⬆️ Réessayer";toast("❌ "+((j&&j.message)||"Mise à jour impossible"))}
+};
+$("#logoutBtn").onclick=async()=>{await api("api.php?action=logout",{method:"POST"}).catch(()=>{});location.reload()};
+function generateWeekSilently(){
+  const sem=weekPool(),we=shuffle(seasonPool("weekend"));const slots={};let i=0,j=0;
+  allSlots().forEach(k=>{slots[k]=slotType(k)==="semaine"?sem[i++].id:we[j++].id});
+  state.menu={weekStart:thisMonday,slots,custom:{},v:3};
+}
+
+/* ================= RENDU ================= */
+function todaySlotKey(){
+  const k=["dim","lun","mar","mer","jeu","ven","sam"][new Date().getDay()];
+  const h=new Date().getHours();
+  if((k==="sam"||k==="dim")&&h<14)return [k+"_m","Ce midi, on mange…"];
+  return [k+"_d","Ce soir, on mange…"];
+}
+function mealCard(key,r,showSlot){
+  const isOpen=open[key];
+  return `<div class="meal">
+    <div class="emo">${esc(r.e)}</div>
+    <div class="info">
+      ${showSlot?`<div class="slot">${SLOTNAME[key.split("_")[1]]}</div>`:""}
+      <div class="name">${esc(r.n)}</div>
+      <div class="meta">⏱️ ${r.m} min · ${esc(r.a)} ${r.claude?'<span class="tag claude">idée de Claude</span>':""}${r.url?'<span class="tag">Cookidoo</span>':""}${typeof inStock==="function"&&(inStock(r.n)||r.ing.some(x=>inStock(x[0])))?'<span class="tag">🧊 en stock</span>':""}</div>
+      ${isOpen?`<div class="recipe"><b>Ingrédients (pour 4)</b><ul>${r.ing.map(i=>`<li>${esc(i[0])}${i[1]?" – "+esc(i[1]):""}</li>`).join("")}</ul>${r.url?`<a class="btn tiny" style="display:inline-block;margin-top:8px;text-decoration:none" href="${esc(r.url)}" target="_blank" rel="noopener">🤖 Ouvrir la recette guidée sur Cookidoo</a><div class="muted small" style="margin-top:4px">≈ 10 min de prépa, le Thermomix fait le reste.</div>`:`<b>Recette</b><ol>${r.st.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`}</div>`:""}
+    </div>
+    <div class="acts">
+      <button class="iconbtn" title="Voir la recette" data-open="${key}">${isOpen?"▴":"📖"}</button>
+      <button class="iconbtn" title="Changer" data-swap="${key}">🎲</button>
+      ${sample?`<button class="iconbtn" title="Demander une idée à Claude" data-claude="${key}">✨</button>`:""}
+    </div>
+  </div>`;
+}
+function renderMenus(){
+  const S_=SEASONS[SEASON];$("#seasonInfo").innerHTML=`<span class="pill">${S_.e} Menus ${S_.n==="printemps"?"de printemps":"d'"+S_.n}</span> <span>De saison en ce moment : ${S_.prod}.</span>`;
+  const ws=state.menu.weekStart;
+  const lbl=$("#weekLabel");
+  if(!ws){lbl.textContent="";$("#weekList").innerHTML='<div class="empty">On prépare la première semaine…</div>';return}
+  const mon=parseYmd(ws);
+  lbl.innerHTML="Semaine du "+mon.toLocaleDateString("fr-FR",{day:"numeric",month:"long"})+(ws<thisMonday?' · <b style="color:var(--coral)">ancienne semaine, tire une nouvelle !</b>':ws>thisMonday?' · <b style="color:var(--leaf)">semaine prochaine, déjà prête 😎</b>':"");
+  const todayK=["dim","lun","mar","mer","jeu","ven","sam"][new Date().getDay()];
+  $("#weekList").innerHTML=DAYS.map(([k,name,sl],idx)=>{
+    const d=new Date(mon);d.setDate(d.getDate()+idx);
+    return `<div class="day ${k===todayK&&ws===thisMonday?"today":""}"><div class="dname">${name} ${d.getDate()}${k===todayK&&ws===thisMonday?" · aujourd'hui":""}</div>
+      ${sl.map(s=>{const key=k+"_"+s,r=recipe(state.menu.slots[key]);return r?mealCard(key,r,sl.length>1):""}).join("")}</div>`;
+  }).join("");
+}
+function shoppingItems(){
+  const map={};
+  Object.values(state.menu.slots).forEach(id=>{const r=recipe(id);if(!r)return;
+    r.ing.forEach(([n,q,ray])=>{if(/^(baguette|pain)/i.test(n))return;const key=n.toLowerCase();if(!map[key])map[key]={key:"i:"+key,n,ray,q:[],from:[]};if(q)map[key].q.push(q);map[key].from.push(r.n)})});
+  return Object.values(map);
+}
+function renderCourses(){
+  const items=shoppingItems();
+  const order=[F,V,C,B,E,S];
+  let html="";let left=0;
+  order.forEach(ray=>{
+    const list=items.filter(i=>i.ray===ray).sort((a,b)=>a.n.localeCompare(b.n));
+    if(!list.length)return;
+    html+=`<div class="aisle">${ray}</div>`;
+    list.forEach(i=>{const st=typeof inStock==="function"&&inStock(i.n);if(st){html+=`<div class="check instock"><span>🧊</span><span class="lbl">${esc(i.n)}</span><span class="qty">déjà en stock (${esc(st.name)})</span></div>`;return}
+      const done=!!state.courses.checked[i.key];if(!done)left++;
+      html+=`<label class="check ${done?"done":""}"><input type="checkbox" data-chk="${esc(i.key)}" ${done?"checked":""}><span class="lbl">${esc(i.n)}</span><span class="qty">${esc(i.q.join(" + "))}</span></label>`});
+  });
+  if(state.courses.extras.length){
+    html+=`<div class="aisle">Ajouts à la main</div>`;
+    state.courses.extras.forEach(x=>{if(!x.done)left++;
+      html+=`<label class="check ${x.done?"done":""}"><input type="checkbox" data-extra="${x.id}" ${x.done?"checked":""}><span class="lbl">${esc(x.name)}</span><button class="del" data-delextra="${x.id}" title="Supprimer">✕</button></label>`});
+  }
+  $("#shopList").innerHTML=html||'<div class="empty">Rien à acheter. Profite, ça n\'arrive jamais.</div>';
+  $("#homeShopCount").textContent=left;
+  $("#homeShopTxt").textContent=left>1?"articles à acheter":left===1?"article à acheter":"tout est dans le frigo 🎉";
+}
+function upcoming(){
+  const t=ymd(new Date());
+  return state.agenda.events.filter(e=>e.date>=t).sort((a,b)=>(a.date+(a.time||"99")).localeCompare(b.date+(b.time||"99")));
+}
+function evHtml(e,del){
+  const d=parseYmd(e.date);
+  return `<div class="ev"><div class="when"><span>${d.toLocaleDateString("fr-FR",{weekday:"short"})}</span><b>${d.getDate()}</b><span>${d.toLocaleDateString("fr-FR",{month:"short"})}</span></div>
+  <div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${e.time?"🕒 "+esc(e.time)+" · ":""}${esc(e.who)}</div></div>
+  ${del?`<button class="del" data-delev="${e.id}" title="Supprimer">✕</button>`:""}</div>`;
+}
+function renderAgenda(){
+  const up=upcoming();
+  $("#agendaList").innerHTML=up.length?up.map(e=>evHtml(e,true)).join(""):'<div class="empty">Agenda vide. Soit c\'est les vacances, soit personne n\'a rien noté.</div>';
+  $("#homeAgenda").innerHTML=up.length?up.slice(0,3).map(e=>evHtml(e,false)).join("")+(up.length>3?`<div class="row" style="margin-top:8px"><button class="btn tiny ghost" data-go="agenda">+ ${up.length-3} autre(s)</button></div>`:""):'<div class="empty">Rien de prévu. <a href="#" data-go="agenda" style="color:var(--sea);font-weight:800">Ajouter un truc</a></div>';
+}
+function renderHome(){
+  const [key,title]=todaySlotKey();
+  $("#homeMealTitle").textContent=title;
+  const ws=state.menu.weekStart;
+  if(ws&&ws>thisMonday){$("#homeMealTitle").textContent="Menus de la semaine prochaine";const first=recipe(state.menu.slots.lun_d);
+    $("#homeMeal").innerHTML=`<div class="muted small">Prêts pour la semaine du ${parseYmd(ws).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}${first?` · lundi : ${esc(first.e)} ${esc(first.n)}`:""}</div><div class="row" style="margin-top:12px"><button class="btn tiny" data-go="menus">Voir la semaine</button></div>`;
+  } else {
+  const r=recipe(state.menu.slots[key]);
+  $("#homeMeal").innerHTML=r?`<div class="hero-meal"><div class="emo">${esc(r.e)}</div><div><div style="font-weight:800;font-size:1.15rem">${esc(r.n)}</div><div class="muted small">⏱️ ${r.m} min · ${esc(r.a)}</div></div></div>
+    <div class="row" style="margin-top:12px"><button class="btn tiny" data-go="menus">Voir la semaine</button><button class="btn tiny ghost" data-swap="${key}">🎲 Pas envie, autre chose</button></div>`
+    :'<div class="empty">Menu en préparation…</div>';
+  }
+  const h=new Date().getHours();
+  $("#hello").textContent=(h<12?"Bonjour":h<18?"Bon après-midi":"Bonsoir")+(ROLE==="enfant"?" la team 👋 · ":" 👋 · ")+fmtDay(new Date());
+}
+function render(){renderHome();renderMenus();renderCourses();renderAgenda()}
+
+/* ================= INTERACTIONS ================= */
+function go(tab){document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
+  document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+tab));window.scrollTo({top:0,behavior:"smooth"})}
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-tab],[data-go],[data-open],[data-swap],[data-claude],[data-delev],[data-delextra]");if(!t)return;
+  if(t.dataset.tab)go(t.dataset.tab);
+  else if(t.dataset.go){e.preventDefault();go(t.dataset.go)}
+  else if(t.dataset.open){open[t.dataset.open]=!open[t.dataset.open];renderMenus()}
+  else if(t.dataset.swap)swapSlot(t.dataset.swap);
+  else if(t.dataset.claude)claudeSlot(t.dataset.claude,t);
+  else if(t.dataset.delev){state.agenda.events=state.agenda.events.filter(x=>x.id!==t.dataset.delev);save("agenda");render()}
+  else if(t.dataset.delextra){e.preventDefault();state.courses.extras=state.courses.extras.filter(x=>x.id!==t.dataset.delextra);save("courses");render()}
+});
+document.addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.chk){if(t.checked)state.courses.checked[t.dataset.chk]=true;else delete state.courses.checked[t.dataset.chk];save("courses");render()}
+  if(t.dataset.extra){const x=state.courses.extras.find(x=>x.id===t.dataset.extra);if(x){x.done=t.checked;save("courses");render()}}
+});
+$("#genWeek").onclick=()=>{if(state.menu.weekStart>thisMonday&&!genWeek._ok){genWeek._ok=true;$("#genWeek").textContent="⚠️ Sûr ? Ça remplace le menu calé sur Cookidoo";setTimeout(()=>{genWeek._ok=false;$("#genWeek").textContent="🎲 Nouvelle semaine"},4000);return}genWeek._ok=false;$("#genWeek").textContent="🎲 Nouvelle semaine";generateWeek()};
+const genWeek={_ok:false};
+$("#clearDone").onclick=()=>{
+  state.courses.extras=state.courses.extras.filter(x=>!x.done);
+  // les articles du menu cochés restent cochés (ils sont achetés) : on ne fait que vider les ajouts manuels cochés
+  save("courses");render();toast("🧹 Liste rangée");
+};
+$("#addExtra").onsubmit=e=>{e.preventDefault();const v=$("#extraName").value.trim();if(!v)return;
+  state.courses.extras.push({id:uid(),name:v.slice(0,80),done:false});$("#extraName").value="";save("courses");render();toast("🛒 Ajouté !")};
+$("#evDate").value=ymd(new Date());
+$("#addEvent").onsubmit=e=>{e.preventDefault();
+  state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date:$("#evDate").value,time:$("#evTime").value,who:$("#evWho").value});
+  $("#evTitle").value="";$("#evTime").value="";save("agenda");render();toast("📅 C'est noté !")};
+
+/* ================= MODULES : NOËL, STOCK, MAISON, SORTIES ================= */
+Object.assign(state,{noel:{budget:0,gifts:[]},stock:{items:[]},maison:{tasks:[],contacts:[]},sorties:{items:[]}});
+DOCS.push("noel","stock","maison","sorties");
+const SUBVIEWS=["noel","stock","maison","sorties"];
+let outFilter="todo";
+
+function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/s\b/g,"").trim()}
+function inStock(name){const n=norm(name);if(n.length<3)return null;
+  return state.stock.items.find(it=>{const m=norm(it.name);return m.length>=3&&(n.includes(m)||m.includes(n))})||null}
+function addMonths(d,m){const x=new Date(d);x.setMonth(x.getMonth()+m);return x}
+function daysTo(d){const t=new Date();t.setHours(0,0,0,0);return Math.round((d-t)/86400000)}
+function xmasDate(){const n=new Date();let d=new Date(n.getFullYear(),11,25);if(daysTo(d)<0)d=new Date(n.getFullYear()+1,11,25);return d}
+const GSTAT=[["idee","💡 Idée"],["trouve","🔎 Trouvé"],["commande","📦 Commandé"],["emballe","🎁 Emballé"]];
+const ZONES=[["congelo","🧊 Congélo"],["frigo","🥶 Frigo"],["placard","🥫 Placard"]];
+const TASK_SUGG=[["Entretien chaudière / pompe à chaleur",12],["Ramonage",12],["Entretien de la clim",12],["Piles des détecteurs de fumée",12],["Nettoyage des gouttières",12],["Filtre de la hotte",3],["Purge des radiateurs",12]];
+const OUT_SUGG=[["Aquarium de La Rochelle","🎉 Sortie"],["Zoo de La Palmyre","🎉 Sortie"],["Balade à vélo sur l'île de Ré","🌳 Balade"],["Fort Boyard vu depuis Fouras","🌳 Balade"],["Nouveau parcours Terra Aventura","🧭 Terra Aventura"],["Voyage au Maroc (2-3 jours)","✈️ Voyage"]];
+const fmtD=s=>parseYmd(s).toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"});
+const euro=n=>(Math.round(n*100)/100).toLocaleString("fr-FR",{minimumFractionDigits:0,maximumFractionDigits:2})+" €";
+
+function renderNoel(){
+  const d=daysTo(xmasDate()),g=state.noel.gifts;
+  $("#noelCount").textContent=d===0?"🎅 C'est aujourd'hui !":"J-"+d;
+  const spent=g.reduce((s,x)=>s+(+x.prix||0),0),b=+state.noel.budget||0;
+  if(document.activeElement!==$("#noelBudget"))$("#noelBudget").value=b||"";
+  $("#noelSpent").innerHTML=`<b>${euro(spent)}</b>${b?` / ${euro(b)}`:""}`;
+  const pct=b?Math.min(100,spent/b*100):0;$("#noelBar").style.width=pct+"%";$("#noelBar").style.background=spent>b&&b?"var(--coral)":"var(--leaf)";
+  const people=[...new Set(g.map(x=>x.pour))].sort((a,b)=>a.localeCompare(b));
+  $("#giftList").innerHTML=people.length?people.map(p=>{const list=g.filter(x=>x.pour===p);const tot=list.reduce((s,x)=>s+(+x.prix||0),0);
+    return `<div class="card"><div class="row"><h2 style="margin:0">${esc(p)}</h2><span class="spacer"></span><span class="muted small">${euro(tot)}</span></div>
+    ${list.map(x=>{const st=GSTAT.find(s=>s[0]===x.statut)||GSTAT[0];
+      return `<div class="ev"><div class="what"><div style="font-weight:800">${esc(x.idee)}</div><div class="who">${x.prix?euro(+x.prix):"prix à voir"}</div></div>
+      <button class="stat st-${st[0]}" data-act="gstat" data-id="${x.id}">${st[1]}</button><button class="del" data-act="gdel" data-id="${x.id}" title="Supprimer">✕</button></div>`}).join("")}</div>`}).join("")
+    :'<div class="card"><div class="empty">Aucun cadeau pour l\'instant. Le Père Noël attend tes instructions.</div></div>';
+  const left=g.filter(x=>x.statut!=="emballe").length;
+  $("#tileNoel").textContent=`J-${d} · ${g.length} cadeau${g.length>1?"x":""}`;
+  return {d,left,total:g.length};
+}
+function renderStock(){
+  const it=state.stock.items;
+  $("#stockList").innerHTML=it.length?ZONES.map(([z,lbl])=>{const l=it.filter(x=>x.zone===z);if(!l.length)return"";
+    return `<div class="aisle">${lbl}</div>`+l.map(x=>`<div class="check"><span class="lbl">${esc(x.name)}</span><span class="qty">${esc(x.qty||"")}</span><button class="btn tiny ghost" data-act="sdel" data-id="${x.id}">Utilisé ✓</button></div>`).join("")}).join("")
+    :'<div class="empty">Rien de noté. Le congélo est un mystère… ou il est vide.</div>';
+  $("#tileStock").textContent=it.length?`${it.length} article${it.length>1?"s":""} en stock`:"vide pour l'instant";
+}
+function taskInfo(t){const next=t.last?addMonths(parseYmd(t.last),+t.every):null;const d=next?daysTo(next):null;return {next,d}}
+function renderMaison(){
+  const ts=state.maison.tasks.map(t=>({t,...taskInfo(t)})).sort((a,b)=>(a.d??-9999)-(b.d??-9999));
+  $("#taskList").innerHTML=ts.length?ts.map(({t,next,d})=>{
+    const cls=d===null||d<0?"late":d<=30?"soon":"ok";
+    const txt=d===null?"Date inconnue : à planifier":d<0?`En retard de ${-d} jour${-d>1?"s":""}`:d===0?"C'est aujourd'hui":`Dans ${d} jour${d>1?"s":""} (${next.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})})`;
+    const ev=t.every>=12?(t.every===12?"tous les ans":`tous les ${t.every/12} ans`):(t.every===1?"tous les mois":`tous les ${t.every} mois`);
+    return `<div class="ev"><span class="dot ${cls}"></span><div class="what"><div style="font-weight:800">${esc(t.name)}</div><div class="who">${txt} · ${ev}${t.last?" · fait le "+fmtD(t.last):""}</div></div>
+    <button class="btn tiny" data-act="tdone" data-id="${t.id}">✅ Fait</button><button class="del" data-act="tdel" data-id="${t.id}" title="Supprimer">✕</button></div>`}).join("")
+    :'<div class="empty">Aucun entretien noté. Pioche dans les suggestions juste en dessous.</div>';
+  const have=new Set(state.maison.tasks.map(t=>t.name));
+  $("#taskSugg").innerHTML=TASK_SUGG.filter(s=>!have.has(s[0])).map((s,i)=>`<button class="chip" data-act="tsugg" data-i="${TASK_SUGG.indexOf(s)}">+ ${esc(s[0])}</button>`).join("");
+  const cs=state.maison.contacts;
+  $("#contactList").innerHTML=cs.length?cs.map(c=>`<div class="ev"><div class="what"><div style="font-weight:800">${esc(c.name)} <span class="muted small">${esc(c.job||"")}</span></div><div class="who">📞 ${esc(c.tel||"—")}</div></div>
+    ${c.tel?`<button class="btn tiny ghost" data-act="ccopy" data-id="${c.id}">Copier</button>`:""}<button class="del" data-act="cdel" data-id="${c.id}" title="Supprimer">✕</button></div>`).join("")
+    :'<div class="empty">Aucun contact. Le jour où la chaudière lâche, tu seras content de l\'avoir noté.</div>';
+  const late=ts.filter(x=>x.d===null||x.d<0).length,soon=ts.filter(x=>x.d!==null&&x.d>=0&&x.d<=30).length;
+  $("#tileMaison").textContent=ts.length?(late?`⚠️ ${late} en retard`:soon?`${soon} à prévoir ce mois-ci`:"Tout est à jour 👌"):"rien de noté";
+  return {ts,late,soon};
+}
+function renderSorties(){
+  const all=state.sorties.items,list=all.filter(x=>outFilter==="done"?x.done:!x.done).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
+  $("#ofTodo").className="btn tiny"+(outFilter==="todo"?"":" ghost");$("#ofDone").className="btn tiny"+(outFilter==="done"?"":" ghost");
+  $("#outList").innerHTML=list.length?list.map(x=>`<div class="ev"><input type="checkbox" class="big-check" data-act="otog" data-id="${x.id}" ${x.done?"checked":""} title="Fait">
+    <div class="what"><div style="font-weight:800">${esc(x.title)}</div><div class="who">${esc(x.type)}${x.date?" · 📅 "+fmtD(x.date):""}${x.note?" · "+esc(x.note):""}</div></div>
+    ${x.date&&!x.done&&!state.agenda.events.some(e=>e.src===x.id)?`<button class="btn tiny ghost" data-act="oagenda" data-id="${x.id}">→ Agenda</button>`:""}
+    <button class="del" data-act="odel" data-id="${x.id}" title="Supprimer">✕</button></div>`).join("")
+    :`<div class="empty">${outFilter==="done"?"Aucune sortie cochée pour l'instant.":"Aucune idée en attente. Les suggestions sont là pour ça !"}</div>`;
+  const have=new Set(all.map(x=>x.title));
+  $("#outSugg").innerHTML=OUT_SUGG.filter(s=>!have.has(s[0])).map(s=>`<button class="chip" data-act="osugg" data-i="${OUT_SUGG.indexOf(s)}">+ ${esc(s[0])}</button>`).join("");
+  const todo=all.filter(x=>!x.done).length;
+  $("#tileSorties").textContent=todo?`${todo} idée${todo>1?"s":""} en attente`:"à remplir";
+}
+function renderHomeExtra(n,m){
+  const tl=m.ts.find(x=>x.d===null||x.d<=30);
+  $("#homeExtra").innerHTML=`<div class="card parent-only"><h2>🎄 Noël</h2><div class="big">J-${n.d}</div><div class="muted small">${n.total?`${n.left} cadeau${n.left>1?"x":""} pas encore emballé${n.left>1?"s":""}`:"aucun cadeau noté"}</div><div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="noel">Ouvrir</button></div></div>
+  <div class="card"><h2>🏠 Maison</h2>${tl?`<div style="font-weight:800">${esc(tl.t.name)}</div><div class="muted small">${tl.d===null?"à planifier":tl.d<0?"en retard !":"dans "+tl.d+" j"}</div>`:`<div class="big">👌</div><div class="muted small">${m.ts.length?"rien d'urgent":"aucun entretien noté"}</div>`}<div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="maison">Ouvrir</button></div></div>`;
+}
+function renderExtra(){const n=renderNoel();renderStock();const m=renderMaison();renderSorties();renderHomeExtra(n,m)}
+const baseRender=render;render=function(){baseRender();renderExtra()};
+go=function(tab){const navTab=SUBVIEWS.includes(tab)?"plus":tab;
+  document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===navTab));
+  document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+tab));window.scrollTo({top:0,behavior:"smooth"})};
+
+document.addEventListener("click",async e=>{
+  const t=e.target.closest("[data-act],[data-outf]");if(!t)return;
+  if(t.dataset.outf){outFilter=t.dataset.outf;renderSorties();return}
+  const id=t.dataset.id,a=t.dataset.act;
+  if(a==="gstat"){const g=state.noel.gifts.find(x=>x.id===id);const i=GSTAT.findIndex(s=>s[0]===g.statut);g.statut=GSTAT[(i+1)%GSTAT.length][0];save("noel");render();if(g.statut==="emballe")toast("🎁 Emballé, c'est pesé !")}
+  else if(a==="gdel"){state.noel.gifts=state.noel.gifts.filter(x=>x.id!==id);save("noel");render()}
+  else if(a==="sdel"){const it=state.stock.items.find(x=>x.id===id);state.stock.items=state.stock.items.filter(x=>x.id!==id);save("stock");render();toast(`👋 ${it?it.name:"Article"} : retour sur la liste de courses si besoin`)}
+  else if(a==="tdone"){const tk=state.maison.tasks.find(x=>x.id===id);tk.last=ymd(new Date());save("maison");render();toast("✅ Noté. Rendez-vous au prochain !")}
+  else if(a==="tdel"){state.maison.tasks=state.maison.tasks.filter(x=>x.id!==id);save("maison");render()}
+  else if(a==="tsugg"){const s=TASK_SUGG[+t.dataset.i];state.maison.tasks.push({id:uid(),name:s[0],every:s[1],last:""});save("maison");render();toast("Ajouté : indique la date du dernier passage avec ✅ ou en le recréant")}
+  else if(a==="cdel"){state.maison.contacts=state.maison.contacts.filter(x=>x.id!==id);save("maison");render()}
+  else if(a==="ccopy"){const c=state.maison.contacts.find(x=>x.id===id);try{await navigator.clipboard.writeText(c.tel);toast("📋 Numéro copié")}catch(err){toast("Copie impossible ici : "+c.tel)}}
+  else if(a==="osugg"){const s=OUT_SUGG[+t.dataset.i];state.sorties.items.push({id:uid(),title:s[0],type:s[1],date:"",note:"",done:false});save("sorties");render();toast("🗺️ Ajouté aux idées")}
+  else if(a==="odel"){state.sorties.items=state.sorties.items.filter(x=>x.id!==id);save("sorties");render()}
+  else if(a==="oagenda"){const o=state.sorties.items.find(x=>x.id===id);state.agenda.events.push({id:uid(),src:o.id,title:o.title,date:o.date,time:"",who:"Toute la famille"});save("agenda");render();toast("📅 Ajouté à l'agenda familial")}
+});
+document.addEventListener("change",e=>{const t=e.target;
+  if(t.dataset.act==="otog"){const o=state.sorties.items.find(x=>x.id===t.dataset.id);o.done=t.checked;save("sorties");render();if(o.done)toast("🎉 Encore un bon souvenir !")}
+});
+$("#noelBudget").onchange=e=>{state.noel.budget=Math.max(0,+e.target.value||0);save("noel");render()};
+$("#addGift").onsubmit=e=>{e.preventDefault();state.noel.gifts.push({id:uid(),pour:$("#gPour").value.trim().slice(0,40),idee:$("#gIdee").value.trim().slice(0,100),prix:parseFloat($("#gPrix").value)||0,statut:"idee"});
+  $("#gIdee").value="";$("#gPrix").value="";save("noel");render();toast("🎁 Noté pour le Père Noël")};
+$("#addStock").onsubmit=e=>{e.preventDefault();state.stock.items.push({id:uid(),name:$("#sName").value.trim().slice(0,60),qty:$("#sQty").value.trim().slice(0,30),zone:$("#sZone").value});
+  $("#sName").value="";$("#sQty").value="";save("stock");render();toast("🧊 Rangé !")};
+$("#addTask").onsubmit=e=>{e.preventDefault();state.maison.tasks.push({id:uid(),name:$("#tName").value.trim().slice(0,80),every:+$("#tEvery").value,last:$("#tLast").value||""});
+  $("#tName").value="";$("#tLast").value="";save("maison");render();toast("🏠 Entretien ajouté")};
+$("#addContact").onsubmit=e=>{e.preventDefault();state.maison.contacts.push({id:uid(),name:$("#cName").value.trim().slice(0,60),job:$("#cJob").value.trim().slice(0,40),tel:$("#cTel").value.trim().slice(0,30)});
+  ["#cName","#cJob","#cTel"].forEach(s=>$(s).value="");save("maison");render();toast("📇 Contact ajouté")};
+$("#addOut").onsubmit=e=>{e.preventDefault();state.sorties.items.push({id:uid(),title:$("#oTitle").value.trim().slice(0,80),type:$("#oType").value,date:$("#oDate").value||"",note:$("#oNote").value.trim().slice(0,120),done:false});
+  ["#oTitle","#oDate","#oNote"].forEach(s=>$(s).value="");save("sorties");render();toast("🗺️ Bonne idée !")};
+
+boot();
+</script>
+</body>
+</html>
