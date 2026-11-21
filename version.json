@@ -1,1 +1,1 @@
-{"version":"1.3.0","date":"2026-11-21","notes":"Renforcement de la sécurité : protection XSS, politique CSP, HTTPS forcé, en-têtes de sécurité."}
+{"version":"1.3.1","date":"2026-11-21","notes":"Polices hébergées sur le site : plus aucune requête vers Google."}
