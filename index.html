@@ -7,6 +7,7 @@
 <link rel="icon" href="icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="icon.svg">
 <meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src 'self'; manifest-src 'self'; base-uri 'none'; form-action 'self'; object-src 'none'">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Le QG de la famille</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -605,8 +606,8 @@ function mealCard(key,r,showSlot){
     <div class="info">
       ${showSlot?`<div class="slot">${SLOTNAME[key.split("_")[1]]}</div>`:""}
       <div class="name">${esc(r.n)}</div>
-      <div class="meta">⏱️ ${r.m} min · ${esc(r.a)} ${r.claude?'<span class="tag claude">idée de Claude</span>':""}${r.url?'<span class="tag">Cookidoo</span>':""}${typeof inStock==="function"&&(inStock(r.n)||r.ing.some(x=>inStock(x[0])))?'<span class="tag">🧊 en stock</span>':""}</div>
-      ${isOpen?`<div class="recipe"><b>Ingrédients (pour 4)</b><ul>${r.ing.map(i=>`<li>${esc(i[0])}${i[1]?" – "+esc(i[1]):""}</li>`).join("")}</ul>${r.url?`<a class="btn tiny" style="display:inline-block;margin-top:8px;text-decoration:none" href="${esc(r.url)}" target="_blank" rel="noopener">🤖 Ouvrir la recette guidée sur Cookidoo</a><div class="muted small" style="margin-top:4px">≈ 10 min de prépa, le Thermomix fait le reste.</div>`:`<b>Recette</b><ol>${r.st.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`}</div>`:""}
+      <div class="meta">⏱️ ${esc(r.m)} min · ${esc(r.a)} ${r.claude?'<span class="tag claude">idée de Claude</span>':""}${r.url?'<span class="tag">Cookidoo</span>':""}${typeof inStock==="function"&&(inStock(r.n)||r.ing.some(x=>inStock(x[0])))?'<span class="tag">🧊 en stock</span>':""}</div>
+      ${isOpen?`<div class="recipe"><b>Ingrédients (pour 4)</b><ul>${r.ing.map(i=>`<li>${esc(i[0])}${i[1]?" – "+esc(i[1]):""}</li>`).join("")}</ul>${r.url&&/^https:\/\/cookidoo\.fr\//.test(r.url)?`<a class="btn tiny" style="display:inline-block;margin-top:8px;text-decoration:none" href="${esc(r.url)}" target="_blank" rel="noopener">🤖 Ouvrir la recette guidée sur Cookidoo</a><div class="muted small" style="margin-top:4px">≈ 10 min de prépa, le Thermomix fait le reste.</div>`:`<b>Recette</b><ol>${r.st.map(s=>`<li>${esc(s)}</li>`).join("")}</ol>`}</div>`:""}
     </div>
     <div class="acts">
       <button class="iconbtn" title="Voir la recette" data-open="${key}">${isOpen?"▴":"📖"}</button>
@@ -650,7 +651,7 @@ function renderCourses(){
   if(state.courses.extras.length){
     html+=`<div class="aisle">Ajouts à la main</div>`;
     state.courses.extras.forEach(x=>{if(!x.done)left++;
-      html+=`<label class="check ${x.done?"done":""}"><input type="checkbox" data-extra="${x.id}" ${x.done?"checked":""}><span class="lbl">${esc(x.name)}</span><button class="del" data-delextra="${x.id}" title="Supprimer">✕</button></label>`});
+      html+=`<label class="check ${x.done?"done":""}"><input type="checkbox" data-extra="${esc(x.id)}" ${x.done?"checked":""}><span class="lbl">${esc(x.name)}</span><button class="del" data-delextra="${esc(x.id)}" title="Supprimer">✕</button></label>`});
   }
   $("#shopList").innerHTML=html||'<div class="empty">Rien à acheter. Profite, ça n\'arrive jamais.</div>';
   $("#homeShopCount").textContent=left;
@@ -664,7 +665,7 @@ function evHtml(e,del){
   const d=parseYmd(e.date);
   return `<div class="ev"><div class="when"><span>${d.toLocaleDateString("fr-FR",{weekday:"short"})}</span><b>${d.getDate()}</b><span>${d.toLocaleDateString("fr-FR",{month:"short"})}</span></div>
   <div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${e.time?"🕒 "+esc(e.time)+" · ":""}${esc(e.who)}</div></div>
-  ${del?`<button class="del" data-delev="${e.id}" title="Supprimer">✕</button>`:""}</div>`;
+  ${del?`<button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button>`:""}</div>`;
 }
 function renderAgenda(){
   const up=upcoming();
@@ -679,7 +680,7 @@ function renderHome(){
     $("#homeMeal").innerHTML=`<div class="muted small">Prêts pour la semaine du ${parseYmd(ws).toLocaleDateString("fr-FR",{day:"numeric",month:"long"})}${first?` · lundi : ${esc(first.e)} ${esc(first.n)}`:""}</div><div class="row" style="margin-top:12px"><button class="btn tiny" data-go="menus">Voir la semaine</button></div>`;
   } else {
   const r=recipe(state.menu.slots[key]);
-  $("#homeMeal").innerHTML=r?`<div class="hero-meal"><div class="emo">${esc(r.e)}</div><div><div style="font-weight:800;font-size:1.15rem">${esc(r.n)}</div><div class="muted small">⏱️ ${r.m} min · ${esc(r.a)}</div></div></div>
+  $("#homeMeal").innerHTML=r?`<div class="hero-meal"><div class="emo">${esc(r.e)}</div><div><div style="font-weight:800;font-size:1.15rem">${esc(r.n)}</div><div class="muted small">⏱️ ${esc(r.m)} min · ${esc(r.a)}</div></div></div>
     <div class="row" style="margin-top:12px"><button class="btn tiny" data-go="menus">Voir la semaine</button><button class="btn tiny ghost" data-swap="${key}">🎲 Pas envie, autre chose</button></div>`
     :'<div class="empty">Menu en préparation…</div>';
   }
@@ -751,7 +752,7 @@ function renderNoel(){
     return `<div class="card"><div class="row"><h2 style="margin:0">${esc(p)}</h2><span class="spacer"></span><span class="muted small">${euro(tot)}</span></div>
     ${list.map(x=>{const st=GSTAT.find(s=>s[0]===x.statut)||GSTAT[0];
       return `<div class="ev"><div class="what"><div style="font-weight:800">${esc(x.idee)}</div><div class="who">${x.prix?euro(+x.prix):"prix à voir"}</div></div>
-      <button class="stat st-${st[0]}" data-act="gstat" data-id="${x.id}">${st[1]}</button><button class="del" data-act="gdel" data-id="${x.id}" title="Supprimer">✕</button></div>`}).join("")}</div>`}).join("")
+      <button class="stat st-${st[0]}" data-act="gstat" data-id="${esc(x.id)}">${st[1]}</button><button class="del" data-act="gdel" data-id="${esc(x.id)}" title="Supprimer">✕</button></div>`}).join("")}</div>`}).join("")
     :'<div class="card"><div class="empty">Aucun cadeau pour l\'instant. Le Père Noël attend tes instructions.</div></div>';
   const left=g.filter(x=>x.statut!=="emballe").length;
   $("#tileNoel").textContent=`J-${d} · ${g.length} cadeau${g.length>1?"x":""}`;
@@ -760,7 +761,7 @@ function renderNoel(){
 function renderStock(){
   const it=state.stock.items;
   $("#stockList").innerHTML=it.length?ZONES.map(([z,lbl])=>{const l=it.filter(x=>x.zone===z);if(!l.length)return"";
-    return `<div class="aisle">${lbl}</div>`+l.map(x=>`<div class="check"><span class="lbl">${esc(x.name)}</span><span class="qty">${esc(x.qty||"")}</span><button class="btn tiny ghost" data-act="sdel" data-id="${x.id}">Utilisé ✓</button></div>`).join("")}).join("")
+    return `<div class="aisle">${lbl}</div>`+l.map(x=>`<div class="check"><span class="lbl">${esc(x.name)}</span><span class="qty">${esc(x.qty||"")}</span><button class="btn tiny ghost" data-act="sdel" data-id="${esc(x.id)}">Utilisé ✓</button></div>`).join("")}).join("")
     :'<div class="empty">Rien de noté. Le congélo est un mystère… ou il est vide.</div>';
   $("#tileStock").textContent=it.length?`${it.length} article${it.length>1?"s":""} en stock`:"vide pour l'instant";
 }
@@ -770,15 +771,15 @@ function renderMaison(){
   $("#taskList").innerHTML=ts.length?ts.map(({t,next,d})=>{
     const cls=d===null||d<0?"late":d<=30?"soon":"ok";
     const txt=d===null?"Date inconnue : à planifier":d<0?`En retard de ${-d} jour${-d>1?"s":""}`:d===0?"C'est aujourd'hui":`Dans ${d} jour${d>1?"s":""} (${next.toLocaleDateString("fr-FR",{day:"numeric",month:"short",year:"numeric"})})`;
-    const ev=t.every>=12?(t.every===12?"tous les ans":`tous les ${t.every/12} ans`):(t.every===1?"tous les mois":`tous les ${t.every} mois`);
+    const ev=t.every>=12?(t.every===12?"tous les ans":`tous les ${esc(t.every/12)} ans`):(t.every===1?"tous les mois":`tous les ${esc(t.every)} mois`);
     return `<div class="ev"><span class="dot ${cls}"></span><div class="what"><div style="font-weight:800">${esc(t.name)}</div><div class="who">${txt} · ${ev}${t.last?" · fait le "+fmtD(t.last):""}</div></div>
-    <button class="btn tiny" data-act="tdone" data-id="${t.id}">✅ Fait</button><button class="del" data-act="tdel" data-id="${t.id}" title="Supprimer">✕</button></div>`}).join("")
+    <button class="btn tiny" data-act="tdone" data-id="${esc(t.id)}">✅ Fait</button><button class="del" data-act="tdel" data-id="${esc(t.id)}" title="Supprimer">✕</button></div>`}).join("")
     :'<div class="empty">Aucun entretien noté. Pioche dans les suggestions juste en dessous.</div>';
   const have=new Set(state.maison.tasks.map(t=>t.name));
   $("#taskSugg").innerHTML=TASK_SUGG.filter(s=>!have.has(s[0])).map((s,i)=>`<button class="chip" data-act="tsugg" data-i="${TASK_SUGG.indexOf(s)}">+ ${esc(s[0])}</button>`).join("");
   const cs=state.maison.contacts;
   $("#contactList").innerHTML=cs.length?cs.map(c=>`<div class="ev"><div class="what"><div style="font-weight:800">${esc(c.name)} <span class="muted small">${esc(c.job||"")}</span></div><div class="who">📞 ${esc(c.tel||"—")}</div></div>
-    ${c.tel?`<button class="btn tiny ghost" data-act="ccopy" data-id="${c.id}">Copier</button>`:""}<button class="del" data-act="cdel" data-id="${c.id}" title="Supprimer">✕</button></div>`).join("")
+    ${c.tel?`<button class="btn tiny ghost" data-act="ccopy" data-id="${esc(c.id)}">Copier</button>`:""}<button class="del" data-act="cdel" data-id="${esc(c.id)}" title="Supprimer">✕</button></div>`).join("")
     :'<div class="empty">Aucun contact. Le jour où la chaudière lâche, tu seras content de l\'avoir noté.</div>';
   const late=ts.filter(x=>x.d===null||x.d<0).length,soon=ts.filter(x=>x.d!==null&&x.d>=0&&x.d<=30).length;
   $("#tileMaison").textContent=ts.length?(late?`⚠️ ${late} en retard`:soon?`${soon} à prévoir ce mois-ci`:"Tout est à jour 👌"):"rien de noté";
@@ -787,10 +788,10 @@ function renderMaison(){
 function renderSorties(){
   const all=state.sorties.items,list=all.filter(x=>outFilter==="done"?x.done:!x.done).sort((a,b)=>(a.date||"9999").localeCompare(b.date||"9999"));
   $("#ofTodo").className="btn tiny"+(outFilter==="todo"?"":" ghost");$("#ofDone").className="btn tiny"+(outFilter==="done"?"":" ghost");
-  $("#outList").innerHTML=list.length?list.map(x=>`<div class="ev"><input type="checkbox" class="big-check" data-act="otog" data-id="${x.id}" ${x.done?"checked":""} title="Fait">
+  $("#outList").innerHTML=list.length?list.map(x=>`<div class="ev"><input type="checkbox" class="big-check" data-act="otog" data-id="${esc(x.id)}" ${x.done?"checked":""} title="Fait">
     <div class="what"><div style="font-weight:800">${esc(x.title)}</div><div class="who">${esc(x.type)}${x.date?" · 📅 "+fmtD(x.date):""}${x.note?" · "+esc(x.note):""}</div></div>
-    ${x.date&&!x.done&&!state.agenda.events.some(e=>e.src===x.id)?`<button class="btn tiny ghost" data-act="oagenda" data-id="${x.id}">→ Agenda</button>`:""}
-    <button class="del" data-act="odel" data-id="${x.id}" title="Supprimer">✕</button></div>`).join("")
+    ${x.date&&!x.done&&!state.agenda.events.some(e=>e.src===x.id)?`<button class="btn tiny ghost" data-act="oagenda" data-id="${esc(x.id)}">→ Agenda</button>`:""}
+    <button class="del" data-act="odel" data-id="${esc(x.id)}" title="Supprimer">✕</button></div>`).join("")
     :`<div class="empty">${outFilter==="done"?"Aucune sortie cochée pour l'instant.":"Aucune idée en attente. Les suggestions sont là pour ça !"}</div>`;
   const have=new Set(all.map(x=>x.title));
   $("#outSugg").innerHTML=OUT_SUGG.filter(s=>!have.has(s[0])).map(s=>`<button class="chip" data-act="osugg" data-i="${OUT_SUGG.indexOf(s)}">+ ${esc(s[0])}</button>`).join("");

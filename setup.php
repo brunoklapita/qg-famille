@@ -8,7 +8,7 @@ $msg = ''; $done = is_file($cfgFile);
 if (!$done && ($_SERVER['REQUEST_METHOD'] ?? '') === 'POST') {
     $p = (string)($_POST['parent'] ?? ''); $k = (string)($_POST['kid'] ?? '');
     if (mb_strlen($p) < 6)        $msg = 'Le code parents doit faire au moins 6 caractères.';
-    elseif (mb_strlen($k) < 4)    $msg = 'Le code enfants doit faire au moins 4 caractères.';
+    elseif (mb_strlen($k) < 6)    $msg = 'Le code enfants doit faire au moins 6 caractères.';
     elseif ($p === $k)            $msg = 'Les deux codes doivent être différents.';
     elseif (!is_dir(DATA_DIR) && !@mkdir(DATA_DIR, 0700, true)) $msg = 'Impossible de créer le dossier data/.';
     elseif (!is_writable(DATA_DIR)) $msg = 'Le dossier data/ n\'est pas accessible en écriture (droits 700 ou 755).';
@@ -40,7 +40,7 @@ button{margin-top:18px;width:100%;padding:12px;border:0;border-radius:12px;backg
   <?php if ($msg): ?><p class="err"><?= htmlspecialchars($msg) ?></p><?php endif; ?>
   <form method="post">
     <label>Code parents (6 caractères min.)<input type="password" name="parent" required minlength="6" autocomplete="new-password"></label>
-    <label>Code enfants (4 caractères min.)<input type="password" name="kid" required minlength="4" autocomplete="new-password"></label>
+    <label>Code enfants (6 caractères min.)<input type="password" name="kid" required minlength="6" autocomplete="new-password"></label>
     <button>Enregistrer</button>
   </form>
 <?php endif; ?>

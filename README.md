@@ -13,7 +13,7 @@ Menus de la semaine, liste de courses, agenda, coin Noël, congélo & placards, 
 2. Vérifie que le dossier `data/` est **accessible en écriture** par PHP (droits `755`, ou `775` selon l'hébergeur).
 3. Ouvre **`https://ton-sous-domaine/setup.php`** et choisis :
    - le **code parents** (6 caractères min.) : accès à tout ;
-   - le **code enfants** (4 caractères min.) : voir les menus, la maison et le stock ; modifier la liste de courses, l'agenda et les sorties. **Le coin Noël leur est invisible**, et le serveur le leur refuse aussi.
+   - le **code enfants** (6 caractères min.) : voir les menus, la maison et le stock ; modifier la liste de courses, l'agenda et les sorties. **Le coin Noël leur est invisible**, et le serveur le leur refuse aussi.
 4. **Supprime `setup.php`** du serveur.
 5. Ouvre le QG, entre ton code. Chaque appareil reste connecté 6 mois (le 🔒 en haut à droite déconnecte).
 
@@ -22,7 +22,7 @@ Menus de la semaine, liste de courses, agenda, coin Noël, congélo & placards, 
 ## Vérifications de sécurité
 
 - `https://ton-sous-domaine/data/config.json` doit répondre **403 Forbidden**. Sinon, ton hébergeur ignore les `.htaccess` (serveur nginx) : il faut alors bloquer `/data/` dans sa configuration, ou déplacer `data/` hors du dossier web et modifier `DATA_DIR` dans `api.php`.
-- Pour forcer le HTTPS, décommente les 3 lignes prévues dans `.htaccess`.
+- Le HTTPS est forcé et les en-têtes de sécurité (HSTS, CSP, anti-clickjacking) sont envoyés automatiquement.
 - Les codes sont stockés hachés (bcrypt). Après 10 essais ratés, une IP est bloquée 15 minutes.
 
 ## Sur les téléphones

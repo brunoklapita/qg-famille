@@ -4,6 +4,8 @@
  * Rôles : "parent" (tout) et "enfant" (lecture limitée, écriture courses/agenda/sorties).
  */
 declare(strict_types=1);
+ini_set('display_errors', '0');
+header_remove('X-Powered-By');
 
 const DATA_DIR  = __DIR__ . '/data';
 const DOCS      = ['menu', 'courses', 'agenda', 'noel', 'stock', 'maison', 'sorties'];
@@ -28,6 +30,16 @@ function config(): ?array {
     if (!is_file($f)) return null;
     $c = json_decode((string)file_get_contents($f), true);
     return is_array($c) ? $c : null;
+}
+/** Les identifiants (id, src) ne doivent contenir que lettres, chiffres, _ et - */
+function validIds($v, int $depth = 0): bool {
+    if ($depth > 12) return false;
+    if (!is_array($v)) return true;
+    foreach ($v as $k => $x) {
+        if (($k === 'id' || $k === 'src') && !(is_string($x) && preg_match('/^[A-Za-z0-9_-]{1,40}$/', $x))) return false;
+        if (is_array($x) && !validIds($x, $depth + 1)) return false;
+    }
+    return true;
 }
 function docPath(string $doc): string { return DATA_DIR . '/' . $doc . '.json'; }
 function readDoc(string $doc): array {
@@ -97,7 +109,7 @@ if ($action === 'login' && $method === 'POST') {
     $_SESSION['role'] = $newRole;
     out(200, ['role' => $newRole]);
 }
-if ($action === 'logout') {
+if ($action === 'logout' && $method === 'POST') {
     $_SESSION = [];
     session_destroy();
     out(200, ['ok' => true]);
@@ -188,6 +200,7 @@ if ($method === 'POST') {
     if (strlen($raw) > MAX_BODY) out(413, ['error' => 'too_large']);
     $body = json_decode($raw, true);
     if (!is_array($body) || !isset($body['data']) || !is_array($body['data'])) out(400, ['error' => 'bad_body']);
+    if (!validIds($body['data'])) out(400, ['error' => 'bad_id']);
     $base = (int)($body['version'] ?? 0);
 
     $lock = fopen(docPath($doc) . '.lock', 'c');
