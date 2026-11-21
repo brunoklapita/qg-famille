@@ -129,6 +129,7 @@ body.locked #login{display:grid}
 #login input{width:100%;font-size:1.2rem;text-align:center;letter-spacing:.2em;margin:12px 0}
 body.kid #genWeek,body.kid [data-swap],body.kid [data-claude],body.kid #addStock,body.kid [data-act=sdel],body.kid [data-act=tdone],body.kid [data-act=tdel],body.kid [data-act=cdel],body.kid #addContact,body.kid .parent-only,body.kid [data-go=noel]{display:none!important}
 body.kid #homeExtra{grid-template-columns:1fr}
+body.kid [data-delev]{display:none!important}
 .chip.on{background:var(--sea);color:#fff;border-color:var(--sea);border-style:solid}
 .kid-only{display:none!important}body.kid .kid-only{display:block!important}
 .wish-star{color:var(--sun)}
@@ -596,7 +597,7 @@ const apiDb={doc(path){const name=path.split("/")[1];return{
     if(status===200){VERS[name]=j.version;setPill("✅ Synchronisé");return}
     if(status===409){VERS[name]=j.version;writing[name]=false;if(j.data)Object.assign(state[name],j.data);render();toast("🔄 Quelqu'un a modifié en même temps : c'est rechargé, refais ta modif");return}
     if(status===401){showLogin()}
-    if(status===403){toast("🔒 Réservé aux parents");return}
+    if(status===403){toast("🔒 "+((j&&j.message)||"Réservé aux parents"));pull(name,true).then(s=>{if(SUBS[name])SUBS[name](s)}).catch(()=>{});return}
     throw new Error(status)}}}};
 async function poll(){if(!ROLE||document.hidden)return;for(const name of DOCS){if(writing[name])continue;
   try{const s=await pull(name,false);if(!s._skip&&SUBS[name])SUBS[name](s)}catch(e){if(e.message==="login")return;setPill("⚠️ Hors ligne","warn")}}}

@@ -261,6 +261,13 @@ if ($method === 'POST') {
         $mine = array_map(function ($x) use ($kid) { $x['pour'] = $kid; return $x; }, array_filter($data['items'] ?? [], 'is_array'));
         $data = ['items' => array_values(array_merge($others, $mine))];
     }
+    if ($role === 'enfant' && $doc === 'agenda') {   // les enfants ne peuvent pas supprimer de rendez-vous
+        $ids = function ($d) { return array_values(array_filter(array_map(fn($e) => is_array($e) ? ($e['id'] ?? null) : null, $d['events'] ?? []))); };
+        if (array_diff($ids($cur['data'] ?? []), $ids($data))) {
+            flock($lock, LOCK_UN); fclose($lock);
+            out(403, ['error' => 'no_delete', 'message' => 'Seuls les parents peuvent supprimer un rendez-vous.']);
+        }
+    }
     $next = ['version' => (int)$cur['version'] + 1, 'data' => $data, 'updated' => date('c')];
     $tmp = docPath($doc) . '.tmp';
     file_put_contents($tmp, json_encode($next, JSON_UNESCAPED_UNICODE));
