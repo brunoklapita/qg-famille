@@ -8,9 +8,9 @@ ini_set('display_errors', '0');
 header_remove('X-Powered-By');
 
 const DATA_DIR  = __DIR__ . '/data';
-const DOCS      = ['menu', 'courses', 'agenda', 'noel', 'stock', 'maison', 'sorties'];
-const KID_READ  = ['menu', 'courses', 'agenda', 'stock', 'maison', 'sorties']; // pas "noel"
-const KID_WRITE = ['courses', 'agenda', 'sorties'];
+const DOCS      = ['menu', 'courses', 'agenda', 'noel', 'stock', 'maison', 'sorties', 'voeux'];
+const KID_READ  = ['menu', 'courses', 'agenda', 'stock', 'maison', 'sorties', 'voeux']; // pas "noel"
+const KID_WRITE = ['courses', 'agenda', 'sorties', 'voeux'];
 const MAX_BODY  = 512 * 1024;           // 512 Ko par document
 const SESSION_DAYS = 180;               // reste connecté 6 mois sur un appareil
 const MAX_ATTEMPTS = 10;                // essais de code…

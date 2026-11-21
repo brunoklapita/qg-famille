@@ -80,10 +80,12 @@ section.view.on{display:block;animation:fade .2s ease}
 .check .qty{margin-left:auto;font-size:.8rem;color:var(--muted);text-align:right}
 .aisle{font-weight:800;font-size:.78rem;text-transform:uppercase;letter-spacing:.08em;color:var(--sea);margin:14px 0 2px}
 .aisle:first-child{margin-top:0}
-input[type=text],input[type=date],input[type=time],input[type=number],select{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;min-width:0}
+input[type=text],input[type=url],input[type=date],input[type=time],input[type=number],select{background:var(--bg);border:1.5px solid var(--line);border-radius:12px;padding:9px 11px;min-width:0}
 input:focus,select:focus{outline:2px solid var(--sea);outline-offset:1px}
 .form{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .form input,.form select{width:100%}
+.form input[type=checkbox]{width:22px;height:22px;flex:none}
+.form label.inline{flex-direction:row;align-items:center;gap:8px;color:var(--ink)}
 .form .full{grid-column:1/-1}
 .form label{font-size:.78rem;font-weight:800;color:var(--muted);display:flex;flex-direction:column;gap:4px}
 .ev{display:flex;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid var(--line)}
@@ -124,6 +126,8 @@ body.locked #login{display:grid}
 body.kid #genWeek,body.kid [data-swap],body.kid [data-claude],body.kid #addStock,body.kid [data-act=sdel],body.kid [data-act=tdone],body.kid [data-act=tdel],body.kid [data-act=cdel],body.kid #addContact,body.kid .parent-only,body.kid [data-go=noel]{display:none!important}
 body.kid #homeExtra{grid-template-columns:1fr}
 .chip.on{background:var(--sea);color:#fff;border-color:var(--sea);border-style:solid}
+.kid-only{display:none!important}body.kid .kid-only{display:block!important}
+.wish-star{color:var(--sun)}
 .iconlink{background:none;border:0;cursor:pointer;font-size:1.1rem;padding:4px}
 svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-weight:700}
 </style>
@@ -222,6 +226,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <button class="tile" data-go="stock"><span class="ic">🧊</span><b>Congélo &amp; placards</b><span id="tileStock" class="muted small"></span></button>
       <button class="tile" data-go="maison"><span class="ic">🏠</span><b>Carnet de la maison</b><span id="tileMaison" class="muted small"></span></button>
       <button class="tile" data-go="sorties"><span class="ic">🗺️</span><b>Sorties en famille</b><span id="tileSorties" class="muted small"></span></button>
+      <button class="tile" data-go="voeux"><span class="ic">🎅</span><b>Liste au Père Noël</b><span id="tileVoeux" class="muted small"></span></button>
     </div>
     <div class="card parent-only" style="margin-top:14px">
       <h2>🔄 Mises à jour du QG</h2>
@@ -249,11 +254,12 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
         <label>Pour qui ?<input type="text" id="gPour" list="gPeople" placeholder="Doris, Malo, Mamie…" required></label>
         <label>Prix (€)<input type="number" id="gPrix" min="0" step="0.5"></label>
         <label class="full">Le cadeau<input type="text" id="gIdee" placeholder="Ex. : casque audio, jeu de société…" required></label>
-        <datalist id="gPeople"><option>Doris</option><option>Malo</option><option>Bruno</option><option>Les grands-parents</option></datalist>
+        <datalist id="gPeople"><option>Doris</option><option>Malo</option><option>Bruno</option><option>Sylvia</option><option>Les grands-parents</option></datalist>
         <button class="btn full" type="submit">Ajouter à la liste</button>
       </form>
       <div class="muted small" style="margin-top:8px">Touche l'étiquette d'un cadeau pour le faire avancer : 💡 idée → 🔎 trouvé → 📦 commandé → 🎁 emballé.</div>
     </div>
+    <div class="card" id="wishParent"></div>
     <div id="giftList"></div>
   </section>
 
@@ -301,6 +307,24 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
         <button class="btn full" type="submit">Ajouter le contact</button>
       </form>
     </div>
+  </section>
+
+  <!-- LISTE AU PERE NOEL -->
+  <section class="view" id="v-voeux">
+    <button class="back" data-go="plus">← Retour</button>
+    <div class="card xmas">
+      <div class="row"><h2 style="margin:0">🎅 Liste au Père Noël</h2><span class="spacer"></span><span class="pill" id="voeuxCount"></span></div>
+      <div class="muted small" style="margin-top:6px">Écris tes envies ici. Le Père Noël (et ses lutins) passent les lire… mais ils ne disent jamais ce qu'ils en font ! 🤫</div>
+      <form class="form" id="addWish" style="margin-top:12px">
+        <label>C'est pour…<select id="wPour"></select></label>
+        <label>Prix environ (€)<input type="number" id="wPrix" min="0" step="1"></label>
+        <label class="full">Mon envie<input type="text" id="wTitre" placeholder="Ex. : un sweat, un jeu, un livre…" required maxlength="100"></label>
+        <label class="full">Lien (facultatif)<input type="url" id="wLien" placeholder="https://…" maxlength="300"></label>
+        <label class="full inline"><input type="checkbox" id="wStar"> <span>⭐ Coup de cœur (ce que je veux le plus !)</span></label>
+        <button class="btn full" type="submit">Envoyer au Père Noël 🛷</button>
+      </form>
+    </div>
+    <div id="wishList"></div>
   </section>
 
   <!-- SORTIES -->
@@ -723,8 +747,8 @@ $("#addEvent").onsubmit=e=>{e.preventDefault();
 
 /* ================= MODULES : NOËL, STOCK, MAISON, SORTIES ================= */
 Object.assign(state,{noel:{budget:0,gifts:[]},stock:{items:[]},maison:{tasks:[],contacts:[]},sorties:{items:[]}});
-DOCS.push("noel","stock","maison","sorties");
-const SUBVIEWS=["noel","stock","maison","sorties"];
+DOCS.push("noel","stock","maison","sorties","voeux");
+const SUBVIEWS=["noel","stock","maison","sorties","voeux"];
 let outFilter="todo";
 
 function norm(s){return String(s||"").toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/s\b/g,"").trim()}
@@ -801,14 +825,44 @@ function renderSorties(){
 function renderHomeExtra(n,m){
   const tl=m.ts.find(x=>x.d===null||x.d<=30);
   $("#homeExtra").innerHTML=`<div class="card parent-only"><h2>🎄 Noël</h2><div class="big">J-${n.d}</div><div class="muted small">${n.total?`${n.left} cadeau${n.left>1?"x":""} pas encore emballé${n.left>1?"s":""}`:"aucun cadeau noté"}</div><div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="noel">Ouvrir</button></div></div>
+  <div class="card kid-only"><h2>🎅 Père Noël</h2><div class="big">J-${n.d}</div><div class="muted small">${(state.voeux.items||[]).length} envie${(state.voeux.items||[]).length>1?"s":""} sur la liste</div><div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="voeux">Ma liste</button></div></div>
   <div class="card"><h2>🏠 Maison</h2>${tl?`<div style="font-weight:800">${esc(tl.t.name)}</div><div class="muted small">${tl.d===null?"à planifier":tl.d<0?"en retard !":"dans "+tl.d+" j"}</div>`:`<div class="big">👌</div><div class="muted small">${m.ts.length?"rien d'urgent":"aucun entretien noté"}</div>`}<div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="maison">Ouvrir</button></div></div>`;
 }
-function renderExtra(){const n=renderNoel();renderStock();const m=renderMaison();renderSorties();renderHomeExtra(n,m)}
+function renderExtra(){const n=renderNoel();renderStock();const m=renderMaison();renderSorties();renderVoeux();renderHomeExtra(n,m)}
 const baseRender=render;render=function(){baseRender();renderExtra()};
 go=function(tab){const navTab=SUBVIEWS.includes(tab)?"plus":tab;
   document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===navTab));
   document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+tab));window.scrollTo({top:0,behavior:"smooth"})};
 
+
+/* ===== Liste au Père Noël ===== */
+state.voeux={items:[]};
+const safeUrl=u=>/^https?:\/\/[^\s"'<>]+$/i.test(u||"")?u:"";
+function giftForWish(id){return state.noel.gifts.find(g=>g.voeu===id)}
+function renderVoeux(){
+  const it=state.voeux.items||[];
+  const sel=$("#wPour"),cur=sel.value;const opts=people();sel.innerHTML=opts.map(p=>`<option>${esc(p)}</option>`).join("");if(opts.includes(cur))sel.value=cur;else if(opts.includes("Doris"))sel.value="Doris";
+  $("#voeuxCount").textContent="J-"+daysTo(xmasDate());
+  const who=[...new Set(it.map(x=>x.pour))].sort((a,b)=>a.localeCompare(b));
+  const line=(x,parent)=>{const g=parent&&giftForWish(x.id),u=safeUrl(x.lien);
+    return `<div class="ev"><div class="what"><div style="font-weight:800">${x.star?'<span class="wish-star">⭐</span> ':""}${esc(x.titre)}</div><div class="who">${x.prix?"≈ "+euro(+x.prix):"prix inconnu"}${u?` · <a href="${esc(u)}" target="_blank" rel="noopener noreferrer" style="color:var(--sea);font-weight:800">voir le lien</a>`:""}</div></div>
+      ${parent?(g?`<span class="stat st-${esc(g.statut)}">${(GSTAT.find(s=>s[0]===g.statut)||GSTAT[0])[1]}</span>`:`<button class="btn tiny" data-act="wtake" data-id="${esc(x.id)}">🎁 Je m'en occupe</button>`)
+        :`<button class="del" data-act="wdel" data-id="${esc(x.id)}" title="Retirer">✕</button>`}</div>`};
+  $("#wishList").innerHTML=who.length?who.map(p=>`<div class="card"><h2>${esc(p)}</h2>${it.filter(x=>x.pour===p).sort((a,b)=>(b.star?1:0)-(a.star?1:0)).map(x=>line(x,false)).join("")}</div>`).join("")
+    :'<div class="card"><div class="empty">La liste est vide. Le Père Noël attend ta lettre ! ✉️</div></div>';
+  $("#wishParent").innerHTML=`<h2>🎅 Les listes des enfants</h2>`+(who.length?who.map(p=>`<div class="aisle">${esc(p)}</div>`+it.filter(x=>x.pour===p).sort((a,b)=>(b.star?1:0)-(a.star?1:0)).map(x=>line(x,true)).join("")).join("")
+    :'<div class="empty">Pas encore de liste. Les enfants l\'écrivent dans ✨ Plus → 🎅 Liste au Père Noël.</div>');
+  $("#tileVoeux").textContent=it.length?`${it.length} envie${it.length>1?"s":""}`:"à écrire !";
+}
+$("#addWish").onsubmit=e=>{e.preventDefault();const lien=$("#wLien").value.trim();
+  if(lien&&!safeUrl(lien)){toast("Le lien doit commencer par https://");return}
+  state.voeux.items=state.voeux.items||[];
+  state.voeux.items.push({id:uid(),pour:$("#wPour").value.slice(0,20),titre:$("#wTitre").value.trim().slice(0,100),prix:parseFloat($("#wPrix").value)||0,lien:lien.slice(0,300),star:$("#wStar").checked});
+  ["#wTitre","#wPrix","#wLien"].forEach(s=>$(s).value="");$("#wStar").checked=false;save("voeux");render();toast("🛷 Envoyé au Père Noël !")};
+document.addEventListener("click",e=>{const t=e.target.closest("[data-act=wdel],[data-act=wtake]");if(!t)return;const id=t.dataset.id;
+  if(t.dataset.act==="wdel"){state.voeux.items=state.voeux.items.filter(x=>x.id!==id);save("voeux");render()}
+  else{const w=state.voeux.items.find(x=>x.id===id);if(!w||giftForWish(id))return;state.noel.gifts.push({id:uid(),pour:w.pour,idee:w.titre,prix:+w.prix||0,statut:"idee",voeu:w.id});save("noel");render();toast("🎁 Ajouté à tes cadeaux (chut !)")}
+});
 document.addEventListener("click",async e=>{
   const t=e.target.closest("[data-act],[data-outf]");if(!t)return;
   if(t.dataset.outf){outFilter=t.dataset.outf;renderSorties();return}
@@ -841,7 +895,7 @@ $("#addOut").onsubmit=e=>{e.preventDefault();state.sorties.items.push({id:uid(),
   ["#oTitle","#oDate","#oNote"].forEach(s=>$(s).value="");save("sorties");render();toast("🗺️ Bonne idée !")};
 
 /* ===== Agenda : « Qui ? » à choix multiples ===== */
-const BASE_PEOPLE=["Bruno","Doris","Malo"];
+const BASE_PEOPLE=["Bruno","Sylvia","Doris","Malo"];
 const whoSel=new Set();
 function people(){return BASE_PEOPLE.concat((state.agenda.people||[]).filter(p=>!BASE_PEOPLE.includes(p)))}
 function whoLabel(){const all=people();if(!whoSel.size||all.every(p=>whoSel.has(p)))return "Toute la famille";return all.filter(p=>whoSel.has(p)).join(", ")}
