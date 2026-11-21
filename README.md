@@ -37,7 +37,19 @@ Dans Safari ou Chrome : menu **Partager** ou **⋮**, puis **« Sur l'écran d'a
 - Le zip d'installation contient déjà les menus de la semaine du 23 novembre (calés sur ton planning Cookidoo). Le dépôt GitHub, lui, ne contient aucune donnée.
 - Le bouton ✨ « idée de Claude » n'existe pas dans cette version : il fonctionne seulement dans la version claude.ai.
 
-## 🔄 Mises à jour
+## 🚀 Installation par Git chez OVH (recommandé : zéro FTP)
+
+OVH sait déployer directement depuis GitHub, et chaque modification envoyée sur `main` arrive toute seule sur le site.
+
+1. Espace client OVH → **Web Cloud → Hébergements →** ton hébergement → onglet **Multisite**.
+2. Ajoute le sous-domaine (ex. `qg.klapita.fr`) avec un **dossier racine vide** (ex. `qg-famille`), puis active le SSL.
+3. Sur la ligne du sous-domaine : **`...` → Associer Git**, dépôt `https://github.com/brunoklapita/qg-famille`, branche `main` (dépôt public : pas de clé SSH à ajouter).
+4. Copie l'**URL de webhook** proposée par OVH et ajoute-la dans GitHub : **Settings → Webhooks → Add webhook** (*Content type* `application/json`, événement *push*). Sans webhook, utilise le bouton **Déployer** dans Multisite.
+5. Ouvre `https://qg.klapita.fr/setup.php` et choisis les codes. Une fois les codes enregistrés, `setup.php` se verrouille (inutile de le supprimer en mode Git).
+
+Les menus de départ (semaine du 23 novembre) sont fournis dans `seed/`. Tes données vivent dans `data/`, que Git ignore : un déploiement ne les touche jamais.
+
+## 🔄 Mises à jour (installation par FTP)
 
 Le code de l'appli est sur GitHub : <https://github.com/brunoklapita/qg-famille>.
 Quand une nouvelle version est publiée, une notification s'affiche au QG pour les parents. Il suffit d'aller dans **✨ Plus → Mises à jour → Installer**.

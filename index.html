@@ -568,6 +568,7 @@ async function checkUpdate(silent){
   const {status,j}=await api("api.php?action=version").catch(()=>({status:0}));
   $("#updCheck").disabled=false;
   if(status!==200){$("#updInfo").textContent="Impossible de vérifier pour le moment.";return}
+  if(j.git){$("#updInfo").textContent="Version installée : "+j.local+" · déployée automatiquement par OVH depuis GitHub 🚀";$("#updGo").style.display="none";$("#updCheck").style.display="none";return}
   $("#updInfo").textContent="Version installée : "+j.local+(j.remote?" · dernière version : "+j.remote:"");
   const newer=j.remote&&verCmp(j.remote,j.local)>0;
   $("#updGo").style.display=newer?"":"none";

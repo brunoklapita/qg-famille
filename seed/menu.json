@@ -1,0 +1,16 @@
+{
+ "weekStart": "2026-11-23",
+ "v": 3,
+ "custom": {},
+ "slots": {
+  "lun_d": "ck_pates_chorizo",
+  "mar_d": "ck_risotto_poulet",
+  "mer_d": "ck_dinde_chataignes",
+  "jeu_d": "ck_veloute_champi",
+  "ven_d": "ck_flammekueche",
+  "sam_m": "chili",
+  "sam_d": "ck_filet_mignon",
+  "dim_m": "rôti",
+  "dim_d": "ck_risotto_bacon"
+ }
+}

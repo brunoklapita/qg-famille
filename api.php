@@ -32,7 +32,11 @@ function config(): ?array {
 function docPath(string $doc): string { return DATA_DIR . '/' . $doc . '.json'; }
 function readDoc(string $doc): array {
     $f = docPath($doc);
-    if (!is_file($f)) return ['version' => 0, 'data' => null];
+    if (!is_file($f)) {                       // première utilisation : données de départ fournies avec l'appli
+        $seed = __DIR__ . '/seed/' . $doc . '.json';
+        $j = is_file($seed) ? json_decode((string)file_get_contents($seed), true) : null;
+        return is_array($j) ? ['version' => 0, 'data' => $j] : ['version' => 0, 'data' => null];
+    }
     $j = json_decode((string)file_get_contents($f), true);
     return is_array($j) ? $j : ['version' => 0, 'data' => null];
 }
@@ -129,7 +133,7 @@ function rmTree(string $dir): void {
     @rmdir($dir);
 }
 if ($action === 'version') {
-    $out = ['local' => localVersion()];
+    $out = ['local' => localVersion(), 'git' => is_dir(__DIR__ . '/.git')];
     if ($role === 'parent') {
         $remote = httpGet('https://raw.githubusercontent.com/' . REPO . '/' . BRANCH . '/version.json?t=' . time());
         $rv = $remote ? json_decode($remote, true) : null;
@@ -140,6 +144,7 @@ if ($action === 'version') {
 }
 if ($action === 'update' && $method === 'POST') {
     if ($role !== 'parent') out(403, ['error' => 'forbidden']);
+    if (is_dir(__DIR__ . '/.git')) out(409, ['error' => 'git', 'message' => 'Le QG est déployé par Git chez OVH : les mises à jour arrivent toutes seules.']);
     if (!class_exists('ZipArchive')) out(500, ['error' => 'nozip', 'message' => "L'extension PHP zip n'est pas active sur l'hébergement."]);
     $zipData = httpGet('https://codeload.github.com/' . REPO . '/zip/refs/heads/' . BRANCH);
     if ($zipData === null) out(502, ['error' => 'download', 'message' => 'Téléchargement depuis GitHub impossible.']);
