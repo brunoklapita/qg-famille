@@ -123,6 +123,7 @@ body.locked #login{display:grid}
 #login input{width:100%;font-size:1.2rem;text-align:center;letter-spacing:.2em;margin:12px 0}
 body.kid #genWeek,body.kid [data-swap],body.kid [data-claude],body.kid #addStock,body.kid [data-act=sdel],body.kid [data-act=tdone],body.kid [data-act=tdel],body.kid [data-act=cdel],body.kid #addContact,body.kid .parent-only,body.kid [data-go=noel]{display:none!important}
 body.kid #homeExtra{grid-template-columns:1fr}
+.chip.on{background:var(--sea);color:#fff;border-color:var(--sea);border-style:solid}
 .iconlink{background:none;border:0;cursor:pointer;font-size:1.1rem;padding:4px}
 svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-weight:700}
 </style>
@@ -203,11 +204,10 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
         <label class="full">Quoi ?<input type="text" id="evTitle" placeholder="Entraînement, dentiste, match…" required></label>
         <label>Jour<input type="date" id="evDate" required></label>
         <label>Heure<input type="time" id="evTime"></label>
-        <label class="full">Qui ?
-          <select id="evWho">
-            <option>Toute la famille</option><option>Bruno</option><option>Les parents</option><option>Doris</option><option>Malo</option><option>Doris et Malo</option>
-          </select>
-        </label>
+        <div class="full"><div class="small muted" style="font-weight:800">Qui ? <span style="font-weight:600">(plusieurs choix possibles)</span></div>
+          <div class="chips" id="evWhoChips"></div>
+          <div class="row" id="evNewWho" style="display:none;margin-top:6px"><input type="text" id="evNewName" placeholder="Prénom" maxlength="20" style="flex:1"><button type="button" class="btn tiny" id="evNewOk">OK</button></div>
+        </div>
         <button class="btn full" type="submit">➕ Ajouter au planning</button>
       </form>
     </div>
@@ -718,8 +718,8 @@ $("#addExtra").onsubmit=e=>{e.preventDefault();const v=$("#extraName").value.tri
   state.courses.extras.push({id:uid(),name:v.slice(0,80),done:false});$("#extraName").value="";save("courses");render();toast("🛒 Ajouté !")};
 $("#evDate").value=ymd(new Date());
 $("#addEvent").onsubmit=e=>{e.preventDefault();
-  state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date:$("#evDate").value,time:$("#evTime").value,who:$("#evWho").value});
-  $("#evTitle").value="";$("#evTime").value="";save("agenda");render();toast("📅 C'est noté !")};
+  state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date:$("#evDate").value,time:$("#evTime").value,who:whoLabel(),whos:[...whoSel]});
+  $("#evTitle").value="";$("#evTime").value="";whoSel.clear();renderWhoChips();save("agenda");render();toast("📅 C'est noté !")};
 
 /* ================= MODULES : NOËL, STOCK, MAISON, SORTIES ================= */
 Object.assign(state,{noel:{budget:0,gifts:[]},stock:{items:[]},maison:{tasks:[],contacts:[]},sorties:{items:[]}});
@@ -839,6 +839,29 @@ $("#addContact").onsubmit=e=>{e.preventDefault();state.maison.contacts.push({id:
   ["#cName","#cJob","#cTel"].forEach(s=>$(s).value="");save("maison");render();toast("📇 Contact ajouté")};
 $("#addOut").onsubmit=e=>{e.preventDefault();state.sorties.items.push({id:uid(),title:$("#oTitle").value.trim().slice(0,80),type:$("#oType").value,date:$("#oDate").value||"",note:$("#oNote").value.trim().slice(0,120),done:false});
   ["#oTitle","#oDate","#oNote"].forEach(s=>$(s).value="");save("sorties");render();toast("🗺️ Bonne idée !")};
+
+/* ===== Agenda : « Qui ? » à choix multiples ===== */
+const BASE_PEOPLE=["Bruno","Doris","Malo"];
+const whoSel=new Set();
+function people(){return BASE_PEOPLE.concat((state.agenda.people||[]).filter(p=>!BASE_PEOPLE.includes(p)))}
+function whoLabel(){const all=people();if(!whoSel.size||all.every(p=>whoSel.has(p)))return "Toute la famille";return all.filter(p=>whoSel.has(p)).join(", ")}
+function renderWhoChips(){
+  const all=people(),allOn=all.length&&all.every(p=>whoSel.has(p));
+  $("#evWhoChips").innerHTML=`<button type="button" class="chip ${allOn?"on":""}" data-who="*">👨‍👩‍👧‍👦 Toute la famille</button>`+
+    all.map(p=>`<button type="button" class="chip ${whoSel.has(p)?"on":""}" data-who="${esc(p)}">${esc(p)}</button>`).join("")+
+    `<button type="button" class="chip" data-who="+">＋ Quelqu'un d'autre</button>`;
+}
+$("#evWhoChips").addEventListener("click",e=>{const b=e.target.closest("[data-who]");if(!b)return;const w=b.dataset.who;
+  if(w==="*"){const all=people();const allOn=all.every(p=>whoSel.has(p));whoSel.clear();if(!allOn)all.forEach(p=>whoSel.add(p))}
+  else if(w==="+"){$("#evNewWho").style.display="";$("#evNewName").focus();return}
+  else whoSel.has(w)?whoSel.delete(w):whoSel.add(w);
+  renderWhoChips()});
+function addPerson(){const n=$("#evNewName").value.trim().slice(0,20);if(!n)return;
+  state.agenda.people=state.agenda.people||[];if(!people().includes(n)){state.agenda.people.push(n);save("agenda")}
+  whoSel.add(n);$("#evNewName").value="";$("#evNewWho").style.display="none";renderWhoChips()}
+$("#evNewOk").onclick=addPerson;
+$("#evNewName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addPerson()}});
+const baseRender2=render;render=function(){baseRender2();renderWhoChips()};
 
 boot();
 </script>
