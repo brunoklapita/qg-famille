@@ -148,6 +148,8 @@ details.caddie[open] summary::after{content:"▴"}
 .daytitle:first-child{margin-top:0}.daytitle.today{color:var(--coral)}
 .ev .hour{min-width:52px;font-weight:800;color:var(--sea);font-size:.92rem}
 #evFormWrap{display:none}#evFormWrap.open{display:block}
+.sheet{position:fixed;inset:0;z-index:40;background:rgba(20,27,30,.45);display:grid;place-items:end center;padding:12px}
+.sheet[hidden]{display:none}.sheet .card{width:min(420px,100%);margin:0 0 calc(70px + env(safe-area-inset-bottom))}
 .iconlink{background:none;border:0;cursor:pointer;font-size:1.1rem;padding:4px}
 svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-weight:700}
 </style>
@@ -392,6 +394,14 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
   <button data-tab="plus"><span class="ic">✨</span>Plus</button>
 </nav>
 <div class="toast" id="toast"></div>
+<div id="shareSheet" class="sheet" hidden><div class="card">
+  <h2>📤 Ajouter à mon agenda</h2>
+  <div class="muted small" id="shareWhat" style="margin-bottom:10px"></div>
+  <a class="btn" id="shareOutlook" target="_blank" rel="noopener" style="display:block;text-align:center;text-decoration:none">🟦 Ouvrir dans Outlook (outlook.com)</a>
+  <button class="btn ghost" id="shareIcs" style="width:100%;margin-top:8px">📎 Télécharger le fichier .ics</button>
+  <div class="muted small" style="margin-top:8px">Le fichier .ics s'ouvre avec l'appli Outlook, le calendrier de l'iPhone ou d'Android.</div>
+  <button class="btn ghost" id="shareClose" style="width:100%;margin-top:8px;border:0">Fermer</button>
+</div></div>
 <div id="login"><form class="card" id="loginForm">
   <div style="font-size:2.4rem">🏠</div><h2 style="justify-content:center">Le QG de la famille</h2>
   <div class="muted small">Entre ton code pour ouvrir le QG.<br>Cet appareil s'en souviendra.</div>
@@ -751,7 +761,7 @@ function dayLabel(s){const d=daysTo(parseYmd(s));if(d===0)return"Aujourd'hui";if
 function renderAgenda(){
   const up=upcoming();let html="",last="";
   up.forEach(e=>{if(e._day!==last){last=e._day;html+=`<div class="daytitle ${daysTo(parseYmd(e._day))===0?"today":""}">${esc(dayLabel(e._day))}</div>`}
-    html+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+(e.date<ymd(new Date())?"depuis "+esc(shortDay(e.date))+", ":"")+evRange(e)+'</span>':""}</div></div><button class="del" data-editev="${esc(e.id)}" title="Modifier">✏️</button><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
+    html+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+(e.date<ymd(new Date())?"depuis "+esc(shortDay(e.date))+", ":"")+evRange(e)+'</span>':""}</div></div><button class="del" data-shareev="${esc(e.id)}" title="Ajouter à Outlook / mon agenda">📤</button><button class="del" data-editev="${esc(e.id)}" title="Modifier">✏️</button><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
   $("#agendaList").innerHTML=html||'<div class="empty">Agenda vide. Soit c\'est les vacances, soit personne n\'a rien noté.</div>';
   let hh="",hl="";up.slice(0,4).forEach(e=>{if(e._day!==hl){hl=e._day;hh+=`<div class="daytitle ${daysTo(parseYmd(e._day))===0?"today":""}">${esc(dayLabel(e._day))}</div>`}
     hh+=`<div class="ev"><div class="hour">${evHour(e)}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}${evRange(e)?' · <span style="color:var(--sea);font-weight:700">'+evRange(e)+'</span>':""}</div></div></div>`});
@@ -1024,6 +1034,44 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-kdel
 function openEvForm(open){$("#evFormWrap").classList.toggle("open",open);$("#evToggle").textContent=open?"✕ Fermer":"＋ Nouvel événement";if(open)setTimeout(()=>$("#evTitle").focus(),50)}
 $("#evToggle").onclick=()=>{const open=$("#evFormWrap").classList.contains("open");if(open&&editingEv)resetEvForm();openEvForm(!open)};
 document.addEventListener("click",e=>{if(e.target.closest("[data-newev]"))setTimeout(()=>openEvForm(true),60)});
+
+/* ===== Agenda : envoyer vers Outlook / .ics ===== */
+const pad=n=>String(n).padStart(2,"0");
+function addDays(s,n){const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)}
+function evBounds(e){
+  const allDay=!e.time;
+  if(allDay)return {allDay,start:e.date,end:addDays(e.endDate||e.date,1)};
+  const s=new Date(e.date+"T"+e.time);
+  let en=e.endTime?new Date((e.endDate||e.date)+"T"+e.endTime):(e.endDate?new Date(e.endDate+"T"+e.time):new Date(s.getTime()+3600000));
+  if(en<=s)en=new Date(s.getTime()+3600000);
+  return {allDay,start:s,end:en};
+}
+function outlookUrl(e){const b=evBounds(e);
+  const p=new URLSearchParams({path:"/calendar/action/compose",rru:"addevent",subject:e.title||"",body:"Ajouté depuis le QG de la famille · "+(e.who||"")});
+  if(b.allDay){p.set("allday","true");p.set("startdt",b.start);p.set("enddt",b.end)}
+  else{p.set("allday","false");p.set("startdt",b.start.toISOString());p.set("enddt",b.end.toISOString())}
+  return "https://outlook.live.com/calendar/0/deeplink/compose?"+p.toString()}
+function icsText(e){const b=evBounds(e);
+  const esc2=s=>String(s||"").replace(/\\/g,"\\\\").replace(/([,;])/g,"\\$1").replace(/\r?\n/g,"\\n");
+  const utc=d=>d.getUTCFullYear()+pad(d.getUTCMonth()+1)+pad(d.getUTCDate())+"T"+pad(d.getUTCHours())+pad(d.getUTCMinutes())+"00Z";
+  const L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//QG de la famille//FR","CALSCALE:GREGORIAN","BEGIN:VEVENT",
+    "UID:"+e.id+"@qg-famille","DTSTAMP:"+utc(new Date()),
+    b.allDay?"DTSTART;VALUE=DATE:"+b.start.replace(/-/g,""):"DTSTART:"+utc(b.start),
+    b.allDay?"DTEND;VALUE=DATE:"+b.end.replace(/-/g,""):"DTEND:"+utc(b.end),
+    "SUMMARY:"+esc2(e.title),"DESCRIPTION:"+esc2("Ajouté depuis le QG de la famille · "+(e.who||"")),"END:VEVENT","END:VCALENDAR"];
+  return L.join("\r\n")+"\r\n"}
+let shareEv=null;
+function openShare(id){shareEv=state.agenda.events.find(x=>x.id===id);if(!shareEv)return;
+  $("#shareWhat").textContent=shareEv.title+" · "+dayLabel(shareEv.date)+(shareEv.time?" à "+shareEv.time:"");
+  $("#shareOutlook").href=outlookUrl(shareEv);$("#shareSheet").hidden=false}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-shareev]");if(b)openShare(b.dataset.shareev)});
+$("#shareClose").onclick=()=>{$("#shareSheet").hidden=true};
+$("#shareSheet").addEventListener("click",e=>{if(e.target.id==="shareSheet")$("#shareSheet").hidden=true});
+$("#shareOutlook").addEventListener("click",()=>setTimeout(()=>{$("#shareSheet").hidden=true},300));
+$("#shareIcs").onclick=()=>{if(!shareEv)return;
+  const blob=new Blob([icsText(shareEv)],{type:"text/calendar;charset=utf-8"});const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);a.download=(shareEv.title||"evenement").replace(/[^\p{L}\p{N} _-]/gu,"").trim().slice(0,40)+".ics";
+  document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);$("#shareSheet").hidden=true;toast("📎 Fichier prêt : ouvre-le pour l'ajouter")};
 
 boot();
 </script>
