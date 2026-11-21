@@ -26,7 +26,8 @@ h1,h2,h3{font-family:Fraunces,Georgia,serif;margin:0;letter-spacing:-.01em}
 button,input,select{font:inherit;color:inherit}
 .wrap{max-width:760px;margin:0 auto;padding:16px 16px 96px}
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;margin:6px 0 16px}
-header.top h1{font-size:1.75rem;font-weight:800}
+header.top h1{font-size:1.75rem;font-weight:800;white-space:nowrap}
+@media (max-width:480px){header.top h1{font-size:1.38rem}header.top{margin-bottom:12px}}
 header.top .sub{color:var(--muted);font-size:.92rem}
 .pill{display:inline-flex;align-items:center;gap:6px;background:var(--sea-soft);color:var(--sea);font-weight:700;font-size:.8rem;padding:4px 10px;border-radius:999px;white-space:nowrap}
 .pill.warn{background:var(--sun-soft);color:#a3620b}
@@ -95,14 +96,17 @@ input:focus,select:focus{outline:2px solid var(--sea);outline-offset:1px}
 .ev .when span{font-size:.7rem;text-transform:uppercase}
 .ev .what{flex:1;min-width:0}
 .ev .who{font-size:.78rem;color:var(--muted)}
-.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.1rem;padding:4px 6px}
+.del{background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.1rem;min-width:40px;min-height:40px;border-radius:10px;flex:none}
+.del:hover{background:var(--bg);color:var(--coral)}
 .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center}
 .stats div{background:var(--bg);border-radius:14px;padding:10px 4px}
 .stats b{display:block;font-family:Fraunces,serif;font-size:1.4rem}
 .stats span{font-size:.74rem;color:var(--muted);font-weight:700}
 .empty{color:var(--muted);font-style:italic;padding:8px 0}
-.toast{position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
+.toast{display:flex;align-items:center;gap:12px;position:fixed;left:50%;bottom:86px;transform:translateX(-50%) translateY(20px);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-weight:700;opacity:0;transition:.25s;pointer-events:none;z-index:20;max-width:90vw;text-align:center}
 .toast.on{opacity:1;transform:translateX(-50%)}
+.toast.undo{pointer-events:auto}
+.toast button{background:var(--sun);color:#3a2504;border:0;border-radius:8px;padding:6px 10px;font-weight:800;cursor:pointer}
 .weather a{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit;background:var(--bg);border-radius:14px;padding:10px 12px;margin-top:8px;font-weight:700}
 .hero-meal{display:flex;gap:12px;align-items:center}
 .hero-meal .emo{font-size:2.6rem}
@@ -128,6 +132,22 @@ body.kid #homeExtra{grid-template-columns:1fr}
 .chip.on{background:var(--sea);color:#fff;border-color:var(--sea);border-style:solid}
 .kid-only{display:none!important}body.kid .kid-only{display:block!important}
 .wish-star{color:var(--sun)}
+
+/* --- Ergonomie v1.7 --- */
+@media (min-width:800px){nav.tabs{left:50%;right:auto;width:760px;transform:translateX(-50%);border:1px solid var(--line);border-bottom:0;border-radius:18px 18px 0 0;box-shadow:0 -6px 20px -14px rgba(0,0,0,.3)}}
+nav.tabs button{position:relative}
+.badge{position:absolute;top:2px;right:10px;background:var(--coral);color:#fff;font-size:.66rem;font-weight:800;min-width:18px;height:18px;line-height:18px;border-radius:9px;padding:0 5px}
+.badge:empty{display:none}
+.progress{height:8px;background:var(--bg);border-radius:99px;overflow:hidden;margin-top:10px}.progress div{height:100%;background:var(--leaf);border-radius:99px;transition:width .3s}
+details.caddie{margin-top:14px;border-top:1px dashed var(--line);padding-top:10px}
+details.caddie summary{cursor:pointer;font-weight:800;color:var(--leaf);list-style:none;display:flex;align-items:center;gap:6px;min-height:40px}
+details.caddie summary::-webkit-details-marker{display:none}
+details.caddie summary::after{content:"▾";margin-left:auto;color:var(--muted)}
+details.caddie[open] summary::after{content:"▴"}
+.daytitle{font-weight:800;font-size:.8rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:14px 0 2px}
+.daytitle:first-child{margin-top:0}.daytitle.today{color:var(--coral)}
+.ev .hour{min-width:52px;font-weight:800;color:var(--sea);font-size:.92rem}
+#evFormWrap{display:none}#evFormWrap.open{display:block}
 .iconlink{background:none;border:0;cursor:pointer;font-size:1.1rem;padding:4px}
 svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-weight:700}
 </style>
@@ -135,11 +155,11 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
 <body class="locked">
 <div class="wrap">
   <header class="top">
-    <div>
+    <div style="min-width:0">
       <div class="sub" id="hello">Bonjour 👋</div>
       <h1>Le QG de la famille</h1>
     </div>
-    <div class="row" style="gap:4px"><span class="pill" id="syncPill">⏳ Connexion…</span><button class="iconlink" id="logoutBtn" title="Se déconnecter de cet appareil">🔒</button></div>
+    <div class="row" style="gap:4px;flex-wrap:nowrap"><span class="pill" id="syncPill">⏳ Connexion…</span><button class="iconlink" id="logoutBtn" title="Se déconnecter de cet appareil">🔒</button></div>
   </header>
 
   <!-- ACCUEIL -->
@@ -148,19 +168,20 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <h2>🍽️ <span id="homeMealTitle">Ce soir, on mange…</span></h2>
       <div id="homeMeal"></div>
     </div>
+    <div class="card">
+      <div class="row"><h2 style="margin:0">📅 À venir</h2><span class="spacer"></span><button class="btn tiny ghost" data-go="agenda" data-newev="1">＋ Ajouter</button></div>
+      <div id="homeAgenda" style="margin-top:8px"></div>
+    </div>
     <div>
       <div class="card">
         <h2>🛒 Courses</h2>
         <div class="big" id="homeShopCount">–</div>
         <div class="muted small" id="homeShopTxt">articles à acheter</div>
+        <div class="progress"><div id="homeShopBar"></div></div>
         <div class="row" style="margin-top:10px"><button class="btn tiny ghost" data-go="courses">Voir la liste</button></div>
       </div>
     </div>
     <div class="grid" id="homeExtra" style="margin-top:14px"></div>
-    <div class="card" style="margin-top:14px">
-      <h2>📅 Bientôt au programme</h2>
-      <div id="homeAgenda"></div>
-    </div>
     <div class="card weather">
       <h2>🌦️ Météo</h2>
       <div class="muted small">Le raccourci vers les pros de la météo :</div>
@@ -178,7 +199,6 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       </div>
       <div class="muted small" id="weekLabel"></div>
       <div class="muted small" style="margin-top:4px" id="seasonInfo"></div>
-      <div class="muted small" style="margin-top:4px">Soirs de semaine en moins de 20 min, week-end midi et soir. Gaz, four, Thermomix, Cookeo, plancha, raclette &amp; crêpière au programme.</div>
     </div>
     <div class="card" id="weekList"></div>
   </section>
@@ -189,9 +209,10 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <div class="row">
         <h2 style="margin:0">🛒 Liste de courses</h2>
         <span class="spacer"></span>
-        <button class="btn tiny ghost" id="clearDone">🧹 Retirer les cochés</button>
+        <span class="pill" id="shopCount"></span>
       </div>
-      <div class="muted small" style="margin-top:4px">Générée automatiquement depuis les menus (pour 4), sans le pain. Ajoute le reste à la main : le papier toilette ne se planifie pas dans un menu.</div>
+      <div class="progress"><div id="shopBar"></div></div>
+      <div class="muted small" style="margin-top:8px">Tout ce qu'il faut pour les menus (pour 4, sans le pain). Touche un article quand il est dans le caddie.</div>
       <form class="row" id="addExtra" style="margin-top:12px">
         <input type="text" id="extraName" placeholder="Ex. : lessive, Nutella de secours…" style="flex:1">
         <button class="btn" type="submit">Ajouter</button>
@@ -203,7 +224,8 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
   <!-- AGENDA -->
   <section class="view" id="v-agenda">
     <div class="card">
-      <h2>📅 Planning familial</h2>
+      <div class="row"><h2 style="margin:0">📅 Planning familial</h2><span class="spacer"></span><button class="btn tiny" id="evToggle">＋ Nouvel événement</button></div>
+      <div id="evFormWrap" style="margin-top:12px">
       <form class="form" id="addEvent">
         <label class="full">Quoi ?<input type="text" id="evTitle" placeholder="Entraînement, dentiste, match…" required></label>
         <label>Jour<input type="date" id="evDate" required></label>
@@ -214,6 +236,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
         </div>
         <button class="btn full" type="submit">➕ Ajouter au planning</button>
       </form>
+      </div>
     </div>
     <div class="card" id="agendaList"></div>
   </section>
@@ -362,7 +385,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
 <nav class="tabs">
   <button data-tab="home" class="on"><span class="ic">🏠</span>Accueil</button>
   <button data-tab="menus"><span class="ic">🍝</span>Menus</button>
-  <button data-tab="courses"><span class="ic">🛒</span>Courses</button>
+  <button data-tab="courses"><span class="ic">🛒</span>Courses<span class="badge" id="navShop"></span></button>
   <button data-tab="agenda"><span class="ic">📅</span>Agenda</button>
   <button data-tab="plus"><span class="ic">✨</span>Plus</button>
 </nav>
@@ -466,7 +489,7 @@ let db=null, sample=null, open={};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const uid=()=>Math.random().toString(36).slice(2,10);
-function toast(t){const el=$("#toast");el.textContent=t;el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),2200)}
+function toast(t){const el=$("#toast");el.textContent=t;el.classList.remove("undo");el.classList.add("on");clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on"),2200)}
 
 function ymd(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0")}
 function mondayOf(d){const x=new Date(d);x.setHours(0,0,0,0);const k=(x.getDay()+6)%7;x.setDate(x.getDate()-k);return x}
@@ -544,7 +567,7 @@ async function save(name){
   writing[name]=false;
   if(pending[name]){pending[name]=false;save(name)}
 }
-function setPill(t,cls){const p=$("#syncPill");p.textContent=t;p.className="pill"+(cls?" "+cls:"")}
+function setPill(t,cls){const p=$("#syncPill");const ok=t.startsWith("✅");p.textContent=ok?"✅":t;p.title=t;p.className="pill"+(cls?" "+cls:"")}
 
 /* ===== Stockage auto-hébergé (api.php) : imite l'interface db utilisée plus haut ===== */
 let ROLE=null,KID=null;const VERS={},SUBS={};
@@ -674,23 +697,32 @@ function shoppingItems(){
 function renderCourses(){
   const items=shoppingItems();
   const order=[F,V,C,B,E,S];
-  let html="";let left=0;
+  let html="",caddie="",left=0,total=0,inCaddie=0;
+  const row=(cls,attr,checked,name,right)=>`<label class="check ${cls}"><input type="checkbox" ${attr} ${checked?"checked":""}><span class="lbl">${esc(name)}</span>${right}</label>`;
   order.forEach(ray=>{
     const list=items.filter(i=>i.ray===ray).sort((a,b)=>a.n.localeCompare(b.n));
-    if(!list.length)return;
-    html+=`<div class="aisle">${ray}</div>`;
-    list.forEach(i=>{const st=typeof inStock==="function"&&inStock(i.n);if(st){html+=`<div class="check instock"><span>🧊</span><span class="lbl">${esc(i.n)}</span><span class="qty">déjà en stock (${esc(st.name)})</span></div>`;return}
-      const done=!!state.courses.checked[i.key];if(!done)left++;
-      html+=`<label class="check ${done?"done":""}"><input type="checkbox" data-chk="${esc(i.key)}" ${done?"checked":""}><span class="lbl">${esc(i.n)}</span><span class="qty">${esc(i.q.join(" + "))}</span></label>`});
+    let part="";
+    list.forEach(i=>{const st=typeof inStock==="function"&&inStock(i.n);if(st)return;
+      total++;const done=!!state.courses.checked[i.key];
+      const r=row(done?"done":"",`data-chk="${esc(i.key)}"`,done,i.n,`<span class="qty">${esc(i.q.join(" + "))}</span>`);
+      if(done){inCaddie++;caddie+=r}else{left++;part+=r}});
+    if(part)html+=`<div class="aisle">${ray}</div>`+part;
   });
-  if(state.courses.extras.length){
-    html+=`<div class="aisle">Ajouts à la main</div>`;
-    state.courses.extras.forEach(x=>{if(!x.done)left++;
-      html+=`<label class="check ${x.done?"done":""}"><input type="checkbox" data-extra="${esc(x.id)}" ${x.done?"checked":""}><span class="lbl">${esc(x.name)}</span><button class="del" data-delextra="${esc(x.id)}" title="Supprimer">✕</button></label>`});
-  }
-  $("#shopList").innerHTML=html||'<div class="empty">Rien à acheter. Profite, ça n\'arrive jamais.</div>';
+  let extra="";
+  state.courses.extras.forEach(x=>{total++;const r=row(x.done?"done":"",`data-extra="${esc(x.id)}"`,x.done,x.name,`<button class="del" data-delextra="${esc(x.id)}" title="Supprimer">✕</button>`);
+    if(x.done){inCaddie++;caddie+=r}else{left++;extra+=r}});
+  if(extra)html+=`<div class="aisle">Ajouts à la main</div>`+extra;
+  const stocked=items.filter(i=>typeof inStock==="function"&&inStock(i.n));
+  if(stocked.length)html+=`<div class="aisle">🧊 Déjà à la maison</div>`+stocked.map(i=>`<div class="check instock"><span>🧊</span><span class="lbl">${esc(i.n)}</span><span class="qty">${esc(inStock(i.n).name)}</span></div>`).join("");
+  if(!left)html=`<div class="empty">🎉 Tout est dans le caddie ! Direction la caisse.</div>`+html;
+  if(inCaddie)html+=`<details class="caddie"><summary>✅ Dans le caddie (${inCaddie})</summary>${caddie}${state.courses.extras.some(x=>x.done)?'<div class="row" style="margin-top:8px"><button class="btn tiny ghost" id="clearDone">🧹 Effacer les ajouts cochés</button></div>':""}</details>`;
+  $("#shopList").innerHTML=html;
+  const pct=total?Math.round(inCaddie/total*100):0;
+  $("#shopBar").style.width=pct+"%";$("#homeShopBar").style.width=pct+"%";
+  $("#shopCount").textContent=`${inCaddie} / ${total}`;
+  $("#navShop").textContent=left?String(left):"";
   $("#homeShopCount").textContent=left;
-  $("#homeShopTxt").textContent=left>1?"articles à acheter":left===1?"article à acheter":"tout est dans le frigo 🎉";
+  $("#homeShopTxt").textContent=left>1?"articles à acheter":left===1?"article à acheter":"tout est dans le caddie 🎉";
 }
 function upcoming(){
   const t=ymd(new Date());
@@ -702,10 +734,15 @@ function evHtml(e,del){
   <div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${e.time?"🕒 "+esc(e.time)+" · ":""}${esc(e.who)}</div></div>
   ${del?`<button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button>`:""}</div>`;
 }
+function dayLabel(s){const d=daysTo(parseYmd(s));if(d===0)return"Aujourd'hui";if(d===1)return"Demain";const t=parseYmd(s).toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long"});return t}
 function renderAgenda(){
-  const up=upcoming();
-  $("#agendaList").innerHTML=up.length?up.map(e=>evHtml(e,true)).join(""):'<div class="empty">Agenda vide. Soit c\'est les vacances, soit personne n\'a rien noté.</div>';
-  $("#homeAgenda").innerHTML=up.length?up.slice(0,3).map(e=>evHtml(e,false)).join("")+(up.length>3?`<div class="row" style="margin-top:8px"><button class="btn tiny ghost" data-go="agenda">+ ${up.length-3} autre(s)</button></div>`:""):'<div class="empty">Rien de prévu. <a href="#" data-go="agenda" style="color:var(--sea);font-weight:800">Ajouter un truc</a></div>';
+  const up=upcoming();let html="",last="";
+  up.forEach(e=>{if(e.date!==last){last=e.date;html+=`<div class="daytitle ${daysTo(parseYmd(e.date))===0?"today":""}">${esc(dayLabel(e.date))}</div>`}
+    html+=`<div class="ev"><div class="hour">${e.time?esc(e.time):'<span class="muted small">journée</span>'}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}</div></div><button class="del" data-delev="${esc(e.id)}" title="Supprimer">✕</button></div>`});
+  $("#agendaList").innerHTML=html||'<div class="empty">Agenda vide. Soit c\'est les vacances, soit personne n\'a rien noté.</div>';
+  let hh="",hl="";up.slice(0,4).forEach(e=>{if(e.date!==hl){hl=e.date;hh+=`<div class="daytitle ${daysTo(parseYmd(e.date))===0?"today":""}">${esc(dayLabel(e.date))}</div>`}
+    hh+=`<div class="ev"><div class="hour">${e.time?esc(e.time):'<span class="muted small">journée</span>'}</div><div class="what"><div style="font-weight:800">${esc(e.title)}</div><div class="who">${esc(e.who)}</div></div></div>`});
+  $("#homeAgenda").innerHTML=up.length?hh+(up.length>4?`<div class="row" style="margin-top:8px"><button class="btn tiny ghost" data-go="agenda">+ ${up.length-4} autre(s)</button></div>`:""):'<div class="empty">Rien de prévu pour l\'instant.</div>';
 }
 function renderHome(){
   const [key,title]=todaySlotKey();
@@ -724,6 +761,12 @@ function renderHome(){
 }
 function render(){renderHome();renderMenus();renderCourses();renderAgenda()}
 
+
+/* ===== Annuler une suppression ===== */
+const snap=doc=>JSON.parse(JSON.stringify(state[doc]));
+function undoToast(msg,doc,before){const el=$("#toast");el.innerHTML=`<span>${esc(msg)}</span><button type="button">Annuler</button>`;el.classList.add("on","undo");
+  el.querySelector("button").onclick=()=>{state[doc]=before;save(doc);render();el.classList.remove("on","undo");toast("↩️ C'est revenu !")};
+  clearTimeout(toast._t);toast._t=setTimeout(()=>el.classList.remove("on","undo"),5000)}
 /* ================= INTERACTIONS ================= */
 function go(tab){document.querySelectorAll("nav.tabs button").forEach(b=>b.classList.toggle("on",b.dataset.tab===tab));
   document.querySelectorAll("section.view").forEach(s=>s.classList.toggle("on",s.id==="v-"+tab));window.scrollTo({top:0,behavior:"smooth"})}
@@ -734,8 +777,8 @@ document.addEventListener("click",e=>{
   else if(t.dataset.open){open[t.dataset.open]=!open[t.dataset.open];renderMenus()}
   else if(t.dataset.swap)swapSlot(t.dataset.swap);
   else if(t.dataset.claude)claudeSlot(t.dataset.claude,t);
-  else if(t.dataset.delev){state.agenda.events=state.agenda.events.filter(x=>x.id!==t.dataset.delev);save("agenda");render()}
-  else if(t.dataset.delextra){e.preventDefault();state.courses.extras=state.courses.extras.filter(x=>x.id!==t.dataset.delextra);save("courses");render()}
+  else if(t.dataset.delev){const _b=snap("agenda");state.agenda.events=state.agenda.events.filter(x=>x.id!==t.dataset.delev);save("agenda");render();undoToast("Événement supprimé","agenda",_b)}
+  else if(t.dataset.delextra){e.preventDefault();const _b=snap("courses");state.courses.extras=state.courses.extras.filter(x=>x.id!==t.dataset.delextra);save("courses");render();undoToast("Article supprimé","courses",_b)}
 });
 document.addEventListener("change",e=>{
   const t=e.target;
@@ -744,17 +787,17 @@ document.addEventListener("change",e=>{
 });
 $("#genWeek").onclick=()=>{if(state.menu.weekStart>thisMonday&&!genWeek._ok){genWeek._ok=true;$("#genWeek").textContent="⚠️ Sûr ? Ça remplace le menu calé sur Cookidoo";setTimeout(()=>{genWeek._ok=false;$("#genWeek").textContent="🎲 Nouvelle semaine"},4000);return}genWeek._ok=false;$("#genWeek").textContent="🎲 Nouvelle semaine";generateWeek()};
 const genWeek={_ok:false};
-$("#clearDone").onclick=()=>{
+document.addEventListener("click",e=>{if(e.target.id!=="clearDone")return;
   state.courses.extras=state.courses.extras.filter(x=>!x.done);
   // les articles du menu cochés restent cochés (ils sont achetés) : on ne fait que vider les ajouts manuels cochés
   save("courses");render();toast("🧹 Liste rangée");
-};
+});
 $("#addExtra").onsubmit=e=>{e.preventDefault();const v=$("#extraName").value.trim();if(!v)return;
   state.courses.extras.push({id:uid(),name:v.slice(0,80),done:false});$("#extraName").value="";save("courses");render();toast("🛒 Ajouté !")};
 $("#evDate").value=ymd(new Date());
 $("#addEvent").onsubmit=e=>{e.preventDefault();
   state.agenda.events.push({id:uid(),title:$("#evTitle").value.trim().slice(0,100),date:$("#evDate").value,time:$("#evTime").value,who:whoLabel(),whos:[...whoSel]});
-  $("#evTitle").value="";$("#evTime").value="";whoSel.clear();renderWhoChips();save("agenda");render();toast("📅 C'est noté !")};
+  $("#evTitle").value="";$("#evTime").value="";whoSel.clear();renderWhoChips();openEvForm(false);save("agenda");render();toast("📅 C'est noté !")};
 
 /* ================= MODULES : NOËL, STOCK, MAISON, SORTIES ================= */
 Object.assign(state,{noel:{budget:0,gifts:[]},stock:{items:[]},maison:{tasks:[],contacts:[]},sorties:{items:[]}});
@@ -872,7 +915,7 @@ $("#addWish").onsubmit=e=>{e.preventDefault();const lien=$("#wLien").value.trim(
   state.voeux.items.push({id:uid(),pour:(KID||$("#wPour").value).slice(0,20),titre:$("#wTitre").value.trim().slice(0,100),prix:parseFloat($("#wPrix").value)||0,lien:lien.slice(0,300),star:$("#wStar").checked});
   ["#wTitre","#wPrix","#wLien"].forEach(s=>$(s).value="");$("#wStar").checked=false;save("voeux");render();toast("🛷 Envoyé au Père Noël !")};
 document.addEventListener("click",e=>{const t=e.target.closest("[data-act=wdel],[data-act=wtake]");if(!t)return;const id=t.dataset.id;
-  if(t.dataset.act==="wdel"){state.voeux.items=state.voeux.items.filter(x=>x.id!==id);save("voeux");render()}
+  if(t.dataset.act==="wdel"){{const _b=snap("voeux");state.voeux.items=state.voeux.items.filter(x=>x.id!==id);save("voeux");render();undoToast("Envie retirée","voeux",_b)}}
   else{const w=state.voeux.items.find(x=>x.id===id);if(!w||giftForWish(id))return;state.noel.gifts.push({id:uid(),pour:w.pour,idee:w.titre,prix:+w.prix||0,statut:"idee",voeu:w.id});save("noel");render();toast("🎁 Ajouté à tes cadeaux (chut !)")}
 });
 document.addEventListener("click",async e=>{
@@ -880,15 +923,15 @@ document.addEventListener("click",async e=>{
   if(t.dataset.outf){outFilter=t.dataset.outf;renderSorties();return}
   const id=t.dataset.id,a=t.dataset.act;
   if(a==="gstat"){const g=state.noel.gifts.find(x=>x.id===id);const i=GSTAT.findIndex(s=>s[0]===g.statut);g.statut=GSTAT[(i+1)%GSTAT.length][0];save("noel");render();if(g.statut==="emballe")toast("🎁 Emballé, c'est pesé !")}
-  else if(a==="gdel"){state.noel.gifts=state.noel.gifts.filter(x=>x.id!==id);save("noel");render()}
-  else if(a==="sdel"){const it=state.stock.items.find(x=>x.id===id);state.stock.items=state.stock.items.filter(x=>x.id!==id);save("stock");render();toast(`👋 ${it?it.name:"Article"} : retour sur la liste de courses si besoin`)}
+  else if(a==="gdel"){{const _b=snap("noel");state.noel.gifts=state.noel.gifts.filter(x=>x.id!==id);save("noel");render();undoToast("Cadeau supprimé","noel",_b)}}
+  else if(a==="sdel"){const it=state.stock.items.find(x=>x.id===id);const _b=snap("stock");state.stock.items=state.stock.items.filter(x=>x.id!==id);save("stock");render();undoToast(`${it?it.name:"Article"} : utilisé`,"stock",_b)}
   else if(a==="tdone"){const tk=state.maison.tasks.find(x=>x.id===id);tk.last=ymd(new Date());save("maison");render();toast("✅ Noté. Rendez-vous au prochain !")}
-  else if(a==="tdel"){state.maison.tasks=state.maison.tasks.filter(x=>x.id!==id);save("maison");render()}
+  else if(a==="tdel"){{const _b=snap("maison");state.maison.tasks=state.maison.tasks.filter(x=>x.id!==id);save("maison");render();undoToast("Entretien supprimé","maison",_b)}}
   else if(a==="tsugg"){const s=TASK_SUGG[+t.dataset.i];state.maison.tasks.push({id:uid(),name:s[0],every:s[1],last:""});save("maison");render();toast("Ajouté : indique la date du dernier passage avec ✅ ou en le recréant")}
-  else if(a==="cdel"){state.maison.contacts=state.maison.contacts.filter(x=>x.id!==id);save("maison");render()}
+  else if(a==="cdel"){{const _b=snap("maison");state.maison.contacts=state.maison.contacts.filter(x=>x.id!==id);save("maison");render();undoToast("Contact supprimé","maison",_b)}}
   else if(a==="ccopy"){const c=state.maison.contacts.find(x=>x.id===id);try{await navigator.clipboard.writeText(c.tel);toast("📋 Numéro copié")}catch(err){toast("Copie impossible ici : "+c.tel)}}
   else if(a==="osugg"){const s=OUT_SUGG[+t.dataset.i];state.sorties.items.push({id:uid(),title:s[0],type:s[1],date:"",note:"",done:false});save("sorties");render();toast("🗺️ Ajouté aux idées")}
-  else if(a==="odel"){state.sorties.items=state.sorties.items.filter(x=>x.id!==id);save("sorties");render()}
+  else if(a==="odel"){{const _b=snap("sorties");state.sorties.items=state.sorties.items.filter(x=>x.id!==id);save("sorties");render();undoToast("Sortie supprimée","sorties",_b)}}
   else if(a==="oagenda"){const o=state.sorties.items.find(x=>x.id===id);state.agenda.events.push({id:uid(),src:o.id,title:o.title,date:o.date,time:"",who:"Toute la famille"});save("agenda");render();toast("📅 Ajouté à l'agenda familial")}
 });
 document.addEventListener("change",e=>{const t=e.target;
@@ -947,6 +990,11 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-kdel
   if(!b.dataset.sure){b.dataset.sure="1";b.textContent="Sûr ?";setTimeout(()=>{if(b.isConnected){delete b.dataset.sure;b.textContent="✕"}},3000);return}
   const {status,j}=await api("api.php?action=kids",{method:"POST",body:JSON.stringify({op:"delete",name:b.dataset.kdel})}).catch(()=>({status:0}));
   if(status===200){renderKids(j);toast("Code supprimé")}});
+
+/* ===== Agenda : formulaire repliable ===== */
+function openEvForm(open){$("#evFormWrap").classList.toggle("open",open);$("#evToggle").textContent=open?"✕ Fermer":"＋ Nouvel événement";if(open)setTimeout(()=>$("#evTitle").focus(),50)}
+$("#evToggle").onclick=()=>openEvForm(!$("#evFormWrap").classList.contains("open"));
+document.addEventListener("click",e=>{if(e.target.closest("[data-newev]"))setTimeout(()=>openEvForm(true),60)});
 
 boot();
 </script>
