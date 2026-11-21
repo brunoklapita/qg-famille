@@ -15,6 +15,7 @@ Menus de la semaine, liste de courses, agenda, coin Noël, congélo & placards, 
    - le **code parents** (6 caractères min.) : accès à tout ;
    - le **code enfants** (6 caractères min.) : voir les menus, la maison et le stock ; modifier la liste de courses, l'agenda et les sorties. **Le coin Noël leur est invisible**, et le serveur le leur refuse aussi.
 4. **Supprime `setup.php`** du serveur.
+   Ensuite, dans le QG en mode parent : **✨ Plus → 🔑 Codes des enfants** pour donner un code personnel à chaque enfant (chacun ne voit alors que sa propre liste au Père Noël). Le code enfants commun est désactivé automatiquement.
 5. Ouvre le QG, entre ton code. Chaque appareil reste connecté 6 mois (le 🔒 en haut à droite déconnecte).
 
 > Fais l'étape 3 juste après l'envoi : tant que les codes ne sont pas choisis, n'importe qui connaissant l'adresse pourrait les définir.

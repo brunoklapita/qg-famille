@@ -94,9 +94,14 @@ if ($action === 'login' && $method === 'POST') {
     }
     $body = json_decode((string)file_get_contents('php://input'), true);
     $code = is_array($body) ? (string)($body['code'] ?? '') : '';
-    $newRole = null;
+    $newRole = null; $kidName = null;
     if ($code !== '' && password_verify($code, $cfg['parent_hash'])) $newRole = 'parent';
-    elseif ($code !== '' && password_verify($code, $cfg['kid_hash'])) $newRole = 'enfant';
+    elseif ($code !== '') {
+        foreach (($cfg['kids'] ?? []) as $k) {
+            if (password_verify($code, (string)$k['hash'])) { $newRole = 'enfant'; $kidName = (string)$k['name']; break; }
+        }
+        if ($newRole === null && !empty($cfg['kid_hash']) && password_verify($code, $cfg['kid_hash'])) $newRole = 'enfant';
+    }
     if ($newRole === null) {
         $att[$key] = ['n' => ($att[$key]['n'] ?? 0) + 1, 't' => $att[$key]['t'] ?? $now];
     } else {
@@ -107,15 +112,50 @@ if ($action === 'login' && $method === 'POST') {
     if ($newRole === null) { usleep(800000); out(401, ['error' => 'bad_code', 'message' => 'Code incorrect.']); }
     session_regenerate_id(true);
     $_SESSION['role'] = $newRole;
-    out(200, ['role' => $newRole]);
+    $_SESSION['kid'] = $kidName;
+    out(200, ['role' => $newRole, 'kid' => $kidName]);
 }
 if ($action === 'logout' && $method === 'POST') {
     $_SESSION = [];
     session_destroy();
     out(200, ['ok' => true]);
 }
+$kid = $_SESSION['kid'] ?? null;
+/* Session « code enfants commun » alors que ce code a été supprimé : reconnexion obligatoire */
+if ($role === 'enfant' && $kid === null && empty($cfg['kid_hash'])) { $_SESSION = []; session_destroy(); $role = null; }
 if ($role === null) out(401, ['error' => 'login_required']);
-if ($action === 'me') out(200, ['role' => $role]);
+if ($action === 'me') out(200, ['role' => $role, 'kid' => $kid]);
+
+/* --- Codes individuels des enfants (parents uniquement) --- */
+function saveConfig(array $c): bool {
+    return file_put_contents(DATA_DIR . '/config.json', json_encode($c), LOCK_EX) !== false;
+}
+if ($action === 'kids') {
+    if ($role !== 'parent') out(403, ['error' => 'forbidden']);
+    $list = function () use (&$cfg) { return ['kids' => array_values(array_map(fn($k) => $k['name'], $cfg['kids'] ?? [])), 'shared' => !empty($cfg['kid_hash'])]; };
+    if ($method === 'GET') out(200, $list());
+    $b = json_decode((string)file_get_contents('php://input'), true);
+    $op = is_array($b) ? (string)($b['op'] ?? '') : '';
+    $name = is_array($b) ? trim((string)($b['name'] ?? '')) : '';
+    if (!preg_match('/^[\p{L}][\p{L} \'-]{0,19}$/u', $name) && $op !== 'unshare') out(400, ['error' => 'bad_name', 'message' => 'Prénom invalide.']);
+    $kids = $cfg['kids'] ?? [];
+    if ($op === 'set') {
+        $code = (string)($b['code'] ?? '');
+        if (mb_strlen($code) < 6) out(400, ['error' => 'short', 'message' => 'Le code doit faire au moins 6 caractères.']);
+        if (password_verify($code, $cfg['parent_hash'])) out(400, ['error' => 'dup', 'message' => 'Ce code est déjà celui des parents.']);
+        foreach ($kids as $k) if ($k['name'] !== $name && password_verify($code, (string)$k['hash'])) out(400, ['error' => 'dup', 'message' => 'Ce code est déjà utilisé par ' . $k['name'] . '.']);
+        $kids = array_values(array_filter($kids, fn($k) => $k['name'] !== $name));
+        $kids[] = ['name' => $name, 'hash' => password_hash($code, PASSWORD_DEFAULT)];
+        $cfg['kids'] = $kids;
+        unset($cfg['kid_hash']);            // dès qu'un code individuel existe, le code commun disparaît
+    } elseif ($op === 'delete') {
+        $cfg['kids'] = array_values(array_filter($kids, fn($k) => $k['name'] !== $name));
+    } elseif ($op === 'unshare') {
+        unset($cfg['kid_hash']);
+    } else out(400, ['error' => 'op']);
+    if (!saveConfig($cfg)) out(500, ['error' => 'write', 'message' => 'Écriture impossible dans data/.']);
+    out(200, $list());
+}
 
 /* --- Mises à jour depuis GitHub (parents uniquement) --- */
 const REPO       = 'brunoklapita/qg-famille';
@@ -190,9 +230,14 @@ if (!in_array($doc, DOCS, true)) out(404, ['error' => 'unknown_doc']);
 $canRead  = $role === 'parent' || in_array($doc, KID_READ, true);
 $canWrite = $role === 'parent' || in_array($doc, KID_WRITE, true);
 
+$ownOnly = ($doc === 'voeux' && $role === 'enfant' && $kid !== null);
 if ($method === 'GET') {
     if (!$canRead) out(403, ['error' => 'forbidden']);
-    out(200, readDoc($doc));
+    $d = readDoc($doc);
+    if ($ownOnly && is_array($d['data'])) {
+        $d['data']['items'] = array_values(array_filter($d['data']['items'] ?? [], fn($x) => is_array($x) && ($x['pour'] ?? '') === $kid));
+    }
+    out(200, $d);
 }
 if ($method === 'POST') {
     if (!$canWrite) out(403, ['error' => 'forbidden']);
@@ -210,7 +255,13 @@ if ($method === 'POST') {
         flock($lock, LOCK_UN); fclose($lock);
         out(409, ['error' => 'conflict', 'version' => $cur['version'], 'data' => $cur['data']]);
     }
-    $next = ['version' => (int)$cur['version'] + 1, 'data' => $body['data'], 'updated' => date('c')];
+    $data = $body['data'];
+    if ($ownOnly) {   // on garde les envies des autres, on remplace seulement celles de l'enfant connecté
+        $others = array_filter(($cur['data']['items'] ?? []), fn($x) => is_array($x) && ($x['pour'] ?? '') !== $kid);
+        $mine = array_map(function ($x) use ($kid) { $x['pour'] = $kid; return $x; }, array_filter($data['items'] ?? [], 'is_array'));
+        $data = ['items' => array_values(array_merge($others, $mine))];
+    }
+    $next = ['version' => (int)$cur['version'] + 1, 'data' => $data, 'updated' => date('c')];
     $tmp = docPath($doc) . '.tmp';
     file_put_contents($tmp, json_encode($next, JSON_UNESCAPED_UNICODE));
     rename($tmp, docPath($doc));

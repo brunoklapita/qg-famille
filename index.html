@@ -229,6 +229,16 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <button class="tile" data-go="voeux"><span class="ic">🎅</span><b>Liste au Père Noël</b><span id="tileVoeux" class="muted small"></span></button>
     </div>
     <div class="card parent-only" style="margin-top:14px">
+      <h2>🔑 Codes des enfants</h2>
+      <div class="muted small">Un code par enfant : chacun ne voit que sa propre liste au Père Noël.</div>
+      <div id="kidCodes" style="margin-top:8px"></div>
+      <form class="form" id="kidForm" style="margin-top:10px">
+        <label>Prénom<select id="kName"></select></label>
+        <label>Nouveau code (6 min.)<input type="password" id="kCode" minlength="6" required autocomplete="new-password"></label>
+        <button class="btn full" type="submit">Enregistrer le code</button>
+      </form>
+    </div>
+    <div class="card parent-only" style="margin-top:14px">
       <h2>🔄 Mises à jour du QG</h2>
       <div class="muted small" id="updInfo">Version installée : …</div>
       <div class="small" id="updNotes" style="margin-top:6px"></div>
@@ -316,7 +326,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <div class="row"><h2 style="margin:0">🎅 Liste au Père Noël</h2><span class="spacer"></span><span class="pill" id="voeuxCount"></span></div>
       <div class="muted small" style="margin-top:6px">Écris tes envies ici. Le Père Noël (et ses lutins) passent les lire… mais ils ne disent jamais ce qu'ils en font ! 🤫</div>
       <form class="form" id="addWish" style="margin-top:12px">
-        <label>C'est pour…<select id="wPour"></select></label>
+        <label id="wPourLbl">C'est pour…<select id="wPour"></select></label>
         <label>Prix environ (€)<input type="number" id="wPrix" min="0" step="1"></label>
         <label class="full">Mon envie<input type="text" id="wTitre" placeholder="Ex. : un sweat, un jeu, un livre…" required maxlength="100"></label>
         <label class="full">Lien (facultatif)<input type="url" id="wLien" placeholder="https://…" maxlength="300"></label>
@@ -537,7 +547,7 @@ async function save(name){
 function setPill(t,cls){const p=$("#syncPill");p.textContent=t;p.className="pill"+(cls?" "+cls:"")}
 
 /* ===== Stockage auto-hébergé (api.php) : imite l'interface db utilisée plus haut ===== */
-let ROLE=null;const VERS={},SUBS={};
+let ROLE=null,KID=null;const VERS={},SUBS={};
 async function api(url,opts={}){const r=await fetch(url,{credentials:"same-origin",...opts,headers:{"X-QG":"1",...(opts.body?{"Content-Type":"application/json"}:{}),...(opts.headers||{})}});
   let j=null;try{j=await r.json()}catch(e){}return {status:r.status,j}}
 async function pull(name,force){const {status,j}=await api("api.php?doc="+name);
@@ -561,10 +571,10 @@ async function boot(){
   const {status,j}=await api("api.php?action=me").catch(()=>({status:0}));
   if(status===503){showLogin("Le QG n'est pas encore installé : ouvre setup.php.");return}
   if(status!==200){showLogin();return}
-  start(j.role);
+  start(j.role,j.kid);
 }
-function start(role){
-  ROLE=role;document.body.classList.remove("locked");document.body.classList.toggle("kid",role==="enfant");
+function start(role,kid){
+  ROLE=role;KID=kid||null;document.body.classList.remove("locked");document.body.classList.toggle("kid",role==="enfant");
   db=apiDb;sample=null;
   let loaded=0;
   DOCS.forEach(name=>{
@@ -577,12 +587,13 @@ function start(role){
     },err=>{if(err&&err.message!=="login")setPill("⚠️ Hors ligne","warn")});
   });
   if(role==="parent")setTimeout(()=>checkUpdate(true),2500);
+  if(role==="parent")setTimeout(loadKids,800);
   if(!start._t){start._t=setInterval(poll,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()})}
 }
 $("#loginForm").onsubmit=async e=>{e.preventDefault();const code=$("#loginCode").value;$("#loginBtn").disabled=true;
   const {status,j}=await api("api.php?action=login",{method:"POST",body:JSON.stringify({code})}).catch(()=>({status:0,j:null}));
   $("#loginBtn").disabled=false;$("#loginCode").value="";
-  if(status===200){start(j.role);toast(j.role==="parent"?"👋 Bienvenue au QG !":"👋 Salut la team !")}
+  if(status===200){start(j.role,j.kid);toast(j.role==="parent"?"👋 Bienvenue au QG !":"👋 Salut "+(j.kid||"la team")+" !")}
   else showLogin((j&&j.message)||"Serveur injoignable")};
 
 /* ===== Mises à jour (GitHub) ===== */
@@ -709,7 +720,7 @@ function renderHome(){
     :'<div class="empty">Menu en préparation…</div>';
   }
   const h=new Date().getHours();
-  $("#hello").textContent=(h<12?"Bonjour":h<18?"Bon après-midi":"Bonsoir")+(ROLE==="enfant"?" la team 👋 · ":" 👋 · ")+fmtDay(new Date());
+  $("#hello").textContent=(h<12?"Bonjour":h<18?"Bon après-midi":"Bonsoir")+(ROLE==="enfant"?" "+(KID||"la team")+" 👋 · ":" 👋 · ")+fmtDay(new Date());
 }
 function render(){renderHome();renderMenus();renderCourses();renderAgenda()}
 
@@ -841,6 +852,7 @@ const safeUrl=u=>/^https?:\/\/[^\s"'<>]+$/i.test(u||"")?u:"";
 function giftForWish(id){return state.noel.gifts.find(g=>g.voeu===id)}
 function renderVoeux(){
   const it=state.voeux.items||[];
+  $("#wPourLbl").style.display=KID?"none":"";
   const sel=$("#wPour"),cur=sel.value;const opts=people();sel.innerHTML=opts.map(p=>`<option>${esc(p)}</option>`).join("");if(opts.includes(cur))sel.value=cur;else if(opts.includes("Doris"))sel.value="Doris";
   $("#voeuxCount").textContent="J-"+daysTo(xmasDate());
   const who=[...new Set(it.map(x=>x.pour))].sort((a,b)=>a.localeCompare(b));
@@ -857,7 +869,7 @@ function renderVoeux(){
 $("#addWish").onsubmit=e=>{e.preventDefault();const lien=$("#wLien").value.trim();
   if(lien&&!safeUrl(lien)){toast("Le lien doit commencer par https://");return}
   state.voeux.items=state.voeux.items||[];
-  state.voeux.items.push({id:uid(),pour:$("#wPour").value.slice(0,20),titre:$("#wTitre").value.trim().slice(0,100),prix:parseFloat($("#wPrix").value)||0,lien:lien.slice(0,300),star:$("#wStar").checked});
+  state.voeux.items.push({id:uid(),pour:(KID||$("#wPour").value).slice(0,20),titre:$("#wTitre").value.trim().slice(0,100),prix:parseFloat($("#wPrix").value)||0,lien:lien.slice(0,300),star:$("#wStar").checked});
   ["#wTitre","#wPrix","#wLien"].forEach(s=>$(s).value="");$("#wStar").checked=false;save("voeux");render();toast("🛷 Envoyé au Père Noël !")};
 document.addEventListener("click",e=>{const t=e.target.closest("[data-act=wdel],[data-act=wtake]");if(!t)return;const id=t.dataset.id;
   if(t.dataset.act==="wdel"){state.voeux.items=state.voeux.items.filter(x=>x.id!==id);save("voeux");render()}
@@ -916,6 +928,25 @@ function addPerson(){const n=$("#evNewName").value.trim().slice(0,20);if(!n)retu
 $("#evNewOk").onclick=addPerson;
 $("#evNewName").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();addPerson()}});
 const baseRender2=render;render=function(){baseRender2();renderWhoChips()};
+
+/* ===== Codes individuels des enfants (parents) ===== */
+async function loadKids(){
+  if(ROLE!=="parent")return;
+  const {status,j}=await api("api.php?action=kids").catch(()=>({status:0}));if(status!==200)return;renderKids(j)}
+function renderKids(j){
+  $("#kidCodes").innerHTML=(j.kids.length?j.kids.map(n=>`<div class="ev"><div class="what"><b>${esc(n)}</b><div class="who">🔑 code personnel actif</div></div><button class="del" data-kdel="${esc(n)}" title="Supprimer ce code">✕</button></div>`).join(""):'<div class="empty">Aucun code personnel pour l\'instant.</div>')
+    +(j.shared?`<div class="small" style="margin-top:8px">⚠️ L'ancien <b>code enfants commun</b> marche encore. Il sera désactivé automatiquement dès le premier code personnel enregistré.</div>`:"");
+  const sel=$("#kName"),cur=sel.value,names=people().filter(p=>!["Bruno","Sylvia"].includes(p));
+  sel.innerHTML=names.map(p=>`<option>${esc(p)}</option>`).join("");if(names.includes(cur))sel.value=cur;
+}
+$("#kidForm").onsubmit=async e=>{e.preventDefault();
+  const {status,j}=await api("api.php?action=kids",{method:"POST",body:JSON.stringify({op:"set",name:$("#kName").value,code:$("#kCode").value})}).catch(()=>({status:0,j:null}));
+  $("#kCode").value="";
+  if(status===200){renderKids(j);toast("🔑 Code de "+$("#kName").value+" enregistré")}else toast("❌ "+((j&&j.message)||"Impossible d'enregistrer"))};
+document.addEventListener("click",async e=>{const b=e.target.closest("[data-kdel]");if(!b)return;
+  if(!b.dataset.sure){b.dataset.sure="1";b.textContent="Sûr ?";setTimeout(()=>{if(b.isConnected){delete b.dataset.sure;b.textContent="✕"}},3000);return}
+  const {status,j}=await api("api.php?action=kids",{method:"POST",body:JSON.stringify({op:"delete",name:b.dataset.kdel})}).catch(()=>({status:0}));
+  if(status===200){renderKids(j);toast("Code supprimé")}});
 
 boot();
 </script>
