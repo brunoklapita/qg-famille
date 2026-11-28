@@ -126,6 +126,30 @@ if ($role === 'enfant' && $kid === null && empty($cfg['kid_hash'])) { $_SESSION 
 if ($role === null) out(401, ['error' => 'login_required']);
 if ($action === 'me') out(200, ['role' => $role, 'kid' => $kid]);
 
+/* --- Envoi d'e-mail (alertes) --- */
+function notifyMail(string $to, string $subject, string $body): bool {
+    $host = preg_replace('/^www\./', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
+    $host = preg_replace('/[^a-z0-9.-]/i', '', $host);
+    $headers = "From: QG famille <noreply@$host>\r\nContent-Type: text/plain; charset=UTF-8\r\nX-Mailer: QG";
+    return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
+}
+const DOC_LABEL = ['courses' => '🛒 Courses', 'agenda' => '📅 Agenda', 'sorties' => '🗺️ Sorties', 'voeux' => '🎅 Liste de Noël'];
+function itemLabel($x): string {
+    foreach (['title', 'titre', 'name', 'nom', 'text', 'label', 'what'] as $k) if (!empty($x[$k]) && is_string($x[$k])) return mb_substr($x[$k], 0, 80);
+    return '(sans titre)';
+}
+/* Éléments (avec id) présents dans $new et absents de $old, sur tous les tableaux de premier niveau */
+function addedItems(array $old, array $new): array {
+    $res = [];
+    foreach ($new as $key => $arr) {
+        if (!is_array($arr) || $arr !== array_values($arr)) continue;
+        $had = [];
+        foreach (($old[$key] ?? []) as $x) if (is_array($x) && isset($x['id'])) $had[$x['id']] = true;
+        foreach ($arr as $x) if (is_array($x) && isset($x['id']) && !isset($had[$x['id']])) $res[] = itemLabel($x);
+    }
+    return $res;
+}
+
 /* --- Codes individuels des enfants (parents uniquement) --- */
 function saveConfig(array $c): bool {
     return file_put_contents(DATA_DIR . '/config.json', json_encode($c), LOCK_EX) !== false;
@@ -155,6 +179,19 @@ if ($action === 'kids') {
     } else out(400, ['error' => 'op']);
     if (!saveConfig($cfg)) out(500, ['error' => 'write', 'message' => 'Écriture impossible dans data/.']);
     out(200, $list());
+}
+
+/* --- Alertes e-mail (parents uniquement) --- */
+if ($action === 'notify') {
+    if ($role !== 'parent') out(403, ['error' => 'forbidden']);
+    if ($method === 'GET') out(200, ['email' => $cfg['notify_email'] ?? '']);
+    $b = json_decode((string)file_get_contents('php://input'), true);
+    $mail = is_array($b) ? trim((string)($b['email'] ?? '')) : '';
+    if ($mail !== '' && (!filter_var($mail, FILTER_VALIDATE_EMAIL) || strlen($mail) > 120)) out(400, ['error' => 'bad_email', 'message' => 'Adresse e-mail invalide.']);
+    if ($mail === '') unset($cfg['notify_email']); else $cfg['notify_email'] = $mail;
+    if (!saveConfig($cfg)) out(500, ['error' => 'write', 'message' => 'Écriture impossible dans data/.']);
+    if ($mail !== '') notifyMail($mail, 'QG : alertes activées ✅', "Parfait, tu recevras un e-mail quand un enfant ajoute quelque chose dans le QG.");
+    out(200, ['email' => $mail]);
 }
 
 /* --- Mises à jour depuis GitHub (parents uniquement) --- */
@@ -273,6 +310,13 @@ if ($method === 'POST') {
     file_put_contents($tmp, json_encode($next, JSON_UNESCAPED_UNICODE));
     rename($tmp, docPath($doc));
     flock($lock, LOCK_UN); fclose($lock);
+    if ($role === 'enfant' && !empty($cfg['notify_email'])) {
+        $added = addedItems(is_array($cur['data']) ? $cur['data'] : [], $data);
+        if ($added) {
+            $list = implode("\n", array_map(fn($a) => '• ' . $a, array_slice($added, 0, 10)));
+            notifyMail($cfg['notify_email'], ($kid ?: 'Un enfant') . ' a ajouté du nouveau dans le QG', ($kid ?: 'Un enfant') . ' a ajouté dans « ' . (DOC_LABEL[$doc] ?? $doc) . " » :\n\n$list\n\nhttps://" . preg_replace('/[^a-z0-9.-]/i', '', $_SERVER['HTTP_HOST'] ?? '') . '/');
+        }
+    }
     out(200, ['version' => $next['version']]);
 }
 out(405, ['error' => 'method']);

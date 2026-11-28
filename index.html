@@ -295,6 +295,15 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       </form>
     </div>
     <div class="card parent-only" style="margin-top:14px">
+      <h2>📧 Alertes e-mail</h2>
+      <div class="muted small">Reçois un e-mail dès qu'un enfant ajoute une course, un rendez-vous, une sortie ou une envie.</div>
+      <form class="form" id="notifyForm" style="margin-top:10px">
+        <label>Ton adresse e-mail<input type="email" id="notifyEmail" placeholder="vide = pas d'alertes" autocomplete="email"></label>
+        <button class="btn full" type="submit">Enregistrer</button>
+      </form>
+      <div class="muted small" id="notifyInfo" style="margin-top:6px"></div>
+    </div>
+    <div class="card parent-only" style="margin-top:14px">
       <h2>🔄 Mises à jour du QG</h2>
       <div class="muted small" id="updInfo">Version installée : …</div>
       <div class="small" id="updNotes" style="margin-top:6px"></div>
@@ -651,7 +660,7 @@ function start(role,kid){
     },err=>{if(err&&err.message!=="login")setPill("⚠️ Hors ligne","warn")});
   });
   if(role==="parent")setTimeout(()=>checkUpdate(true),2500);
-  if(role==="parent")setTimeout(loadKids,800);
+  if(role==="parent"){setTimeout(loadKids,800);setTimeout(loadNotify,900)}
   if(!start._t){start._t=setInterval(poll,15000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)poll()})}
 }
 $("#loginForm").onsubmit=async e=>{e.preventDefault();const code=$("#loginCode").value;$("#loginBtn").disabled=true;
@@ -1058,6 +1067,15 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-kdel
   if(!b.dataset.sure){b.dataset.sure="1";b.textContent="Sûr ?";setTimeout(()=>{if(b.isConnected){delete b.dataset.sure;b.textContent="✕"}},3000);return}
   const {status,j}=await api("api.php?action=kids",{method:"POST",body:JSON.stringify({op:"delete",name:b.dataset.kdel})}).catch(()=>({status:0}));
   if(status===200){renderKids(j);toast("Code supprimé")}});
+
+/* ===== Alertes e-mail (parents) ===== */
+async function loadNotify(){
+  if(ROLE!=="parent")return;
+  const {status,j}=await api("api.php?action=notify").catch(()=>({status:0}));if(status!==200)return;
+  $("#notifyEmail").value=j.email||"";$("#notifyInfo").textContent=j.email?"✅ Alertes actives.":"Alertes désactivées."}
+$("#notifyForm").onsubmit=async e=>{e.preventDefault();
+  const {status,j}=await api("api.php?action=notify",{method:"POST",body:JSON.stringify({email:$("#notifyEmail").value.trim()})}).catch(()=>({status:0,j:null}));
+  if(status===200){$("#notifyInfo").textContent=j.email?"✅ Alertes actives (un e-mail de test vient de partir, pense au dossier spam).":"Alertes désactivées.";toast(j.email?"📧 Alertes activées":"Alertes coupées")}else toast("❌ "+((j&&j.message)||"Impossible d'enregistrer"))};
 
 /* ===== Agenda : formulaire repliable ===== */
 function openEvForm(open){$("#evFormWrap").classList.toggle("open",open);$("#evToggle").textContent=open?"✕ Fermer":"＋ Nouvel événement";if(open)setTimeout(()=>$("#evTitle").focus(),50)}
