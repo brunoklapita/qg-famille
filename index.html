@@ -151,6 +151,32 @@ details.caddie[open] summary::after{content:"▴"}
 #evFormWrap{display:none}#evFormWrap.open{display:block}
 .sheet{position:fixed;inset:0;z-index:40;background:rgba(20,27,30,.45);display:grid;place-items:end center;padding:12px}
 .sheet[hidden]{display:none}.sheet .card{width:min(420px,100%);margin:0 0 calc(70px + env(safe-area-inset-bottom))}
+
+/* --- Impression --- */
+.print-only{display:none}
+@media print{
+  :root{--bg:#fff;--card:#fff;--ink:#111;--muted:#555;--line:#cfcfcf;--sea:#1d6f84;--sea-soft:#fff;--sun-soft:#fff;--leaf-soft:#fff;--coral:#c0392b}
+  @page{size:A4;margin:12mm}
+  html,body{background:#fff!important;color:#111;font-size:11pt}
+  body.locked .wrap{filter:none}
+  nav.tabs,.toast,#login,.sheet,#syncPill,#logoutBtn,.btn,.iconbtn,.del,.back,#evFormWrap,form,.chips,#seasonInfo,#hello,.no-print,details.caddie{display:none!important}
+  .print-only{display:block}
+  .wrap{max-width:none;padding:0}
+  header.top{margin:0 0 5mm;padding-bottom:3mm;border-bottom:2px solid #111;align-items:flex-end}
+  header.top h1{font-size:18pt}
+  .card{box-shadow:none!important;border:0!important;padding:0!important;margin:0 0 4mm!important;background:#fff!important}
+  .card h2{font-size:13pt}
+  .ev,.meal,.daytitle{break-inside:avoid}
+  .daytitle{color:#111!important;border-bottom:1px solid #111;padding-bottom:1mm;margin-top:5mm!important}
+  .ev{padding:2mm 0}
+  .ev .hour{min-width:22mm}
+  .meal{background:#fff!important;border:1px solid var(--line);padding:2mm 3mm;margin-bottom:2mm}
+  .day{padding:2mm 0;break-inside:avoid}
+  .tag{border:1px solid var(--line)}
+  #weekList{columns:2;column-gap:8mm}
+  #weekList .day{border-top:0}
+  a{color:#111;text-decoration:none}
+}
 .iconlink{background:none;border:0;cursor:pointer;font-size:1.1rem;padding:4px}
 svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-weight:700}
 </style>
@@ -161,6 +187,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
     <div style="min-width:0">
       <div class="sub" id="hello">Bonjour 👋</div>
       <h1>Le QG de la famille</h1>
+      <div class="print-only small" id="printTitle"></div>
     </div>
     <div class="row" style="gap:4px;flex-wrap:nowrap"><span class="pill" id="syncPill">⏳ Connexion…</span><button class="iconlink" id="logoutBtn" title="Se déconnecter de cet appareil">🔒</button></div>
   </header>
@@ -198,6 +225,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <div class="row" style="margin-bottom:6px">
         <h2 style="margin:0">🍝 Menus de la semaine</h2>
         <span class="spacer"></span>
+        <button class="btn tiny ghost" data-print="1" title="Imprimer les menus">🖨️</button>
         <button class="btn tiny sun" id="genWeek">🎲 Nouvelle semaine</button>
       </div>
       <div class="muted small" id="weekLabel"></div>
@@ -227,7 +255,7 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
   <!-- AGENDA -->
   <section class="view" id="v-agenda">
     <div class="card">
-      <div class="row"><h2 style="margin:0">📅 Planning familial</h2><span class="spacer"></span><button class="btn tiny" id="evToggle">＋ Nouvel événement</button></div>
+      <div class="row"><h2 style="margin:0">📅 Planning familial</h2><span class="spacer"></span><button class="btn tiny ghost" data-print="1" title="Imprimer le planning">🖨️</button><button class="btn tiny" id="evToggle">＋ Nouvel événement</button></div>
       <div id="evFormWrap" style="margin-top:12px">
       <form class="form" id="addEvent">
         <label class="full">Quoi ?<input type="text" id="evTitle" placeholder="Entraînement, dentiste, match…" required></label>
@@ -1073,6 +1101,13 @@ $("#shareIcs").onclick=()=>{if(!shareEv)return;
   const blob=new Blob([icsText(shareEv)],{type:"text/calendar;charset=utf-8"});const a=document.createElement("a");
   a.href=URL.createObjectURL(blob);a.download=(shareEv.title||"evenement").replace(/[^\p{L}\p{N} _-]/gu,"").trim().slice(0,40)+".ics";
   document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);$("#shareSheet").hidden=true;toast("📎 Fichier prêt : ouvre-le pour l'ajouter")};
+
+/* ===== Impression ===== */
+function printTitle(){const v=document.querySelector("section.view.on");const id=v?v.id:"";
+  const what={"v-agenda":"Planning familial","v-menus":"Menus de la semaine","v-courses":"Liste de courses"}[id]||"";
+  $("#printTitle").textContent=(what?what+" · ":"")+"imprimé le "+new Date().toLocaleDateString("fr-FR",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+window.addEventListener("beforeprint",printTitle);
+document.addEventListener("click",e=>{if(e.target.closest("[data-print]")){printTitle();window.print()}});
 
 boot();
 </script>
