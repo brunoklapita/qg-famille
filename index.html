@@ -299,7 +299,16 @@ svg text{fill:var(--muted);font-family:system-ui,sans-serif;font-size:11px;font-
       <div class="muted small">Reçois un e-mail dès qu'un enfant ajoute une course, un rendez-vous, une sortie ou une envie.</div>
       <form class="form" id="notifyForm" style="margin-top:10px">
         <label>Ton adresse e-mail<input type="email" id="notifyEmail" placeholder="vide = pas d'alertes" autocomplete="email"></label>
-        <button class="btn full" type="submit">Enregistrer</button>
+        <details style="margin-top:6px"><summary class="small">⚙️ Serveur SMTP (optionnel, plus fiable)</summary>
+          <div class="muted small" style="margin:6px 0">Vide = envoi par le serveur OVH (peut finir en spam). Sinon renseigne ton compte mail (ex. Outlook : smtp-mail.outlook.com, 587, STARTTLS).</div>
+          <label>Serveur<input id="smHost" placeholder="smtp.exemple.fr" autocomplete="off"></label>
+          <label>Port<input id="smPort" type="number" min="1" max="65535" placeholder="587"></label>
+          <label>Sécurité<select id="smSec"><option value="tls">STARTTLS (587)</option><option value="ssl">SSL/TLS (465)</option><option value="none">Aucune (25)</option></select></label>
+          <label>Identifiant<input id="smUser" autocomplete="off"></label>
+          <label>Mot de passe<input id="smPass" type="password" autocomplete="new-password" placeholder=""></label>
+          <label>Expéditeur (From)<input id="smFrom" type="email" placeholder="qg@klapita.fr"></label>
+        </details>
+        <button class="btn full" type="submit">Enregistrer et tester</button>
       </form>
       <div class="muted small" id="notifyInfo" style="margin-top:6px"></div>
     </div>
@@ -1069,13 +1078,22 @@ document.addEventListener("click",async e=>{const b=e.target.closest("[data-kdel
   if(status===200){renderKids(j);toast("Code supprimé")}});
 
 /* ===== Alertes e-mail (parents) ===== */
+function fillNotify(j){
+  $("#notifyEmail").value=j.email||"";const m=j.smtp||{};
+  $("#smHost").value=m.host||"";$("#smPort").value=m.host?m.port:"";$("#smSec").value=m.secure||"tls";
+  $("#smUser").value=m.user||"";$("#smFrom").value=m.from||"";$("#smPass").value="";
+  $("#smPass").placeholder=m.has_pass?"•••••• (inchangé si vide)":"";
+  $("#notifyInfo").textContent=j.email?("✅ Alertes actives"+(m.host?" via "+m.host:" (envoi OVH)")+"."):"Alertes désactivées."}
 async function loadNotify(){
   if(ROLE!=="parent")return;
-  const {status,j}=await api("api.php?action=notify").catch(()=>({status:0}));if(status!==200)return;
-  $("#notifyEmail").value=j.email||"";$("#notifyInfo").textContent=j.email?"✅ Alertes actives.":"Alertes désactivées."}
+  const {status,j}=await api("api.php?action=notify").catch(()=>({status:0}));if(status!==200)return;fillNotify(j)}
 $("#notifyForm").onsubmit=async e=>{e.preventDefault();
-  const {status,j}=await api("api.php?action=notify",{method:"POST",body:JSON.stringify({email:$("#notifyEmail").value.trim()})}).catch(()=>({status:0,j:null}));
-  if(status===200){$("#notifyInfo").textContent=j.email?"✅ Alertes actives (un e-mail de test vient de partir, pense au dossier spam).":"Alertes désactivées.";toast(j.email?"📧 Alertes activées":"Alertes coupées")}else toast("❌ "+((j&&j.message)||"Impossible d'enregistrer"))};
+  const body={email:$("#notifyEmail").value.trim(),smtp:{host:$("#smHost").value.trim(),port:+$("#smPort").value||0,secure:$("#smSec").value,user:$("#smUser").value.trim(),pass:$("#smPass").value,from:$("#smFrom").value.trim()}};
+  const {status,j}=await api("api.php?action=notify",{method:"POST",body:JSON.stringify(body)}).catch(()=>({status:0,j:null}));
+  if(status!==200){toast("❌ "+((j&&j.message)||"Impossible d'enregistrer"));return}
+  fillNotify(j);
+  if(j.tested){if(j.sent){$("#notifyInfo").textContent+=" Mail de test envoyé, regarde ta boîte (et les spams).";toast("📧 Mail de test envoyé")}else{$("#notifyInfo").textContent="⚠️ Enregistré, mais l'envoi a échoué : "+(j.error||"erreur inconnue");toast("⚠️ Envoi du test échoué")}}
+  else toast("Alertes coupées")};
 
 /* ===== Agenda : formulaire repliable ===== */
 function openEvForm(open){$("#evFormWrap").classList.toggle("open",open);$("#evToggle").textContent=open?"✕ Fermer":"＋ Nouvel événement";if(open)setTimeout(()=>$("#evTitle").focus(),50)}

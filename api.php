@@ -127,11 +127,50 @@ if ($role === null) out(401, ['error' => 'login_required']);
 if ($action === 'me') out(200, ['role' => $role, 'kid' => $kid]);
 
 /* --- Envoi d'e-mail (alertes) --- */
-function notifyMail(string $to, string $subject, string $body): bool {
+function smtpSend(array $c, string $to, string $subject, string $body, ?string &$err): bool {
+    $host = (string)($c['host'] ?? ''); $port = (int)($c['port'] ?? 587); $sec = (string)($c['secure'] ?? 'tls');
+    $remote = ($sec === 'ssl' ? 'ssl://' : 'tcp://') . $host . ':' . $port;
+    $fp = @stream_socket_client($remote, $en, $es, 10);
+    if (!$fp) { $err = "Connexion impossible à $host:$port ($es)"; return false; }
+    stream_set_timeout($fp, 10);
+    $read = function () use ($fp) { $r = ''; while (($l = fgets($fp, 515)) !== false) { $r .= $l; if (strlen($l) < 4 || $l[3] === ' ') break; } return $r; };
+    $cmd = function (string $x, string $ok) use ($fp, $read, &$err) {
+        if ($x !== '') fwrite($fp, $x . "\r\n");
+        $r = $read();
+        if (strpos($r, $ok) !== 0) { $err = trim(preg_replace('/\s+/', ' ', $r)) ?: 'Pas de réponse du serveur'; return false; }
+        return true;
+    };
+    $ehlo = preg_replace('/[^a-z0-9.-]/i', '', $_SERVER['HTTP_HOST'] ?? 'localhost') ?: 'localhost';
+    $from = (string)($c['from'] ?: $c['user']);
+    $ok = $cmd('', '220') && $cmd("EHLO $ehlo", '250');
+    if ($ok && $sec === 'tls') {
+        $ok = $cmd('STARTTLS', '220');
+        if ($ok && !@stream_socket_enable_crypto($fp, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) { $err = 'Échec STARTTLS'; $ok = false; }
+        if ($ok) $ok = $cmd("EHLO $ehlo", '250');
+    }
+    if ($ok && ($c['user'] ?? '') !== '') {
+        $ok = $cmd('AUTH LOGIN', '334') && $cmd(base64_encode($c['user']), '334') && $cmd(base64_encode((string)($c['pass'] ?? '')), '235');
+        if (!$ok && strpos((string)$err, '535') !== false) $err = 'Identifiant ou mot de passe refusé (535)';
+    }
+    $ok = $ok && $cmd("MAIL FROM:<$from>", '250') && $cmd("RCPT TO:<$to>", '250') && $cmd('DATA', '354');
+    if ($ok) {
+        $msg = "From: QG famille <$from>\r\nTo: <$to>\r\nSubject: =?UTF-8?B?" . base64_encode($subject) . "?=\r\nDate: " . date('r') . "\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: base64\r\n\r\n" . chunk_split(base64_encode($body));
+        fwrite($fp, $msg . "\r\n.\r\n");
+        $ok = $cmd('', '250');
+    }
+    if ($fp) { @fwrite($fp, "QUIT\r\n"); fclose($fp); }
+    return $ok;
+}
+function notifyMail(string $to, string $subject, string $body, ?string &$err = null): bool {
+    $cfg = config() ?: [];
+    $smtp = $cfg['smtp'] ?? null;
+    if (is_array($smtp) && !empty($smtp['host'])) return smtpSend($smtp, $to, $subject, $body, $err);
     $host = preg_replace('/^www\./', '', $_SERVER['HTTP_HOST'] ?? 'localhost');
     $host = preg_replace('/[^a-z0-9.-]/i', '', $host);
     $headers = "From: QG famille <noreply@$host>\r\nContent-Type: text/plain; charset=UTF-8\r\nX-Mailer: QG";
-    return @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
+    $ok = @mail($to, '=?UTF-8?B?' . base64_encode($subject) . '?=', $body, $headers);
+    if (!$ok) $err = 'mail() du serveur a échoué';
+    return $ok;
 }
 const DOC_LABEL = ['courses' => '🛒 Courses', 'agenda' => '📅 Agenda', 'sorties' => '🗺️ Sorties', 'voeux' => '🎅 Liste de Noël'];
 function itemLabel($x): string {
@@ -184,14 +223,42 @@ if ($action === 'kids') {
 /* --- Alertes e-mail (parents uniquement) --- */
 if ($action === 'notify') {
     if ($role !== 'parent') out(403, ['error' => 'forbidden']);
-    if ($method === 'GET') out(200, ['email' => $cfg['notify_email'] ?? '']);
+    $view = function () use (&$cfg) {
+        $s = $cfg['smtp'] ?? [];
+        return ['email' => $cfg['notify_email'] ?? '', 'smtp' => ['host' => $s['host'] ?? '', 'port' => (int)($s['port'] ?? 587), 'secure' => $s['secure'] ?? 'tls', 'user' => $s['user'] ?? '', 'from' => $s['from'] ?? '', 'has_pass' => !empty($s['pass'])]];
+    };
+    if ($method === 'GET') out(200, $view());
     $b = json_decode((string)file_get_contents('php://input'), true);
-    $mail = is_array($b) ? trim((string)($b['email'] ?? '')) : '';
+    if (!is_array($b)) out(400, ['error' => 'bad_body']);
+    $mail = trim((string)($b['email'] ?? ''));
     if ($mail !== '' && (!filter_var($mail, FILTER_VALIDATE_EMAIL) || strlen($mail) > 120)) out(400, ['error' => 'bad_email', 'message' => 'Adresse e-mail invalide.']);
     if ($mail === '') unset($cfg['notify_email']); else $cfg['notify_email'] = $mail;
+    $in = is_array($b['smtp'] ?? null) ? $b['smtp'] : [];
+    $host = trim((string)($in['host'] ?? ''));
+    if ($host === '') unset($cfg['smtp']);
+    else {
+        if (!preg_match('/^[a-z0-9.-]{3,100}$/i', $host)) out(400, ['error' => 'bad_host', 'message' => 'Serveur SMTP invalide.']);
+        $from = trim((string)($in['from'] ?? ''));
+        if ($from !== '' && !filter_var($from, FILTER_VALIDATE_EMAIL)) out(400, ['error' => 'bad_from', 'message' => 'Adresse d\'expédition invalide.']);
+        $user = trim((string)($in['user'] ?? ''));
+        if (preg_match('/[\r\n]/', $user)) out(400, ['error' => 'bad_user']);
+        $pass = (string)($in['pass'] ?? '');
+        if ($pass === '') $pass = (string)($cfg['smtp']['pass'] ?? '');   // vide = on garde l'ancien
+        $sec = in_array($in['secure'] ?? '', ['ssl', 'tls', 'none'], true) ? $in['secure'] : 'tls';
+        $port = (int)($in['port'] ?? 0); if ($port < 1 || $port > 65535) $port = $sec === 'ssl' ? 465 : 587;
+        if ($from === '' && filter_var($user, FILTER_VALIDATE_EMAIL)) $from = $user;
+        if ($from === '') out(400, ['error' => 'bad_from', 'message' => 'Indique une adresse d\'expédition.']);
+        $cfg['smtp'] = ['host' => $host, 'port' => $port, 'secure' => $sec, 'user' => $user, 'pass' => $pass, 'from' => $from];
+    }
     if (!saveConfig($cfg)) out(500, ['error' => 'write', 'message' => 'Écriture impossible dans data/.']);
-    if ($mail !== '') notifyMail($mail, 'QG : alertes activées ✅', "Parfait, tu recevras un e-mail quand un enfant ajoute quelque chose dans le QG.");
-    out(200, ['email' => $mail]);
+    $res = $view(); $res['tested'] = false;
+    if ($mail !== '') {
+        $err = null;
+        $res['tested'] = true;
+        $res['sent'] = notifyMail($mail, 'QG : alertes activées ✅', 'Parfait, tu recevras un e-mail quand un enfant ajoute quelque chose dans le QG.', $err);
+        if (!$res['sent']) $res['error'] = $err;
+    }
+    out(200, $res);
 }
 
 /* --- Mises à jour depuis GitHub (parents uniquement) --- */
